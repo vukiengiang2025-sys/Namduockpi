@@ -4,7 +4,7 @@ import { useAppStore } from '../store';
 import { Plus, Trash2, CheckCircle, Circle, Bell, BrainCircuit, Sparkles, Loader2, ChevronDown, ChevronUp, FileUp, FileText, X } from 'lucide-react';
 import { LocalNotifications } from '@capacitor/local-notifications';
 import { Capacitor } from '@capacitor/core';
-import { summarizeAsMemory } from '../services/memoryService';
+import { summarizeAsMemory, consolidateMemories } from '../services/memoryService';
 import { parseFile } from '../utils/fileParser';
 
 export default function Notes() {
@@ -17,6 +17,7 @@ export default function Notes() {
   // Memory State
   const [newMemoryText, setNewMemoryText] = useState('');
   const [isProcessingMemory, setIsProcessingMemory] = useState(false);
+  const [isConsolidating, setIsConsolidating] = useState(false);
   const [expandedMemoryId, setExpandedMemoryId] = useState<string | null>(null);
   const [activeTab, setActiveTab] = useState<'notes' | 'memories'>('notes');
   const [selectedFile, setSelectedFile] = useState<File | null>(null);
@@ -114,6 +115,28 @@ export default function Notes() {
       alert(error.message);
     } finally {
       setIsProcessingMemory(false);
+    }
+  };
+
+  const handleConsolidate = async () => {
+    if (memories.length < 2) return;
+    if (!confirm('AI sẽ gộp toàn bộ ký ức hiện tại thành một bản tóm tắt chiến lược duy nhất để tối ưu dung lượng và tốc độ xử lý. Bạn có chắc không?')) return;
+
+    setIsConsolidating(true);
+    try {
+      const consolidated = await consolidateMemories(memories);
+      
+      // Delete old memories and add the new one
+      for (const m of memories) {
+        deleteMemory(m.id);
+      }
+      
+      addMemory(consolidated);
+      alert('Đã gộp và tối ưu hóa ký ức thành công!');
+    } catch (error: any) {
+      alert('Lỗi khi gộp ký ức: ' + error.message);
+    } finally {
+      setIsConsolidating(false);
     }
   };
 
@@ -350,6 +373,17 @@ export default function Notes() {
           </div>
 
           <div className="space-y-3">
+            {memories && memories.length >= 2 && (
+              <button 
+                onClick={handleConsolidate}
+                disabled={isConsolidating}
+                className="w-full bg-purple-500/10 hover:bg-purple-500/20 border border-purple-500/30 rounded-2xl py-3 text-xs text-purple-300 font-bold flex items-center justify-center gap-2 mb-4"
+              >
+                {isConsolidating ? <Loader2 className="w-3 h-3 animate-spin" /> : <Sparkles className="w-3 h-3" />}
+                {isConsolidating ? 'Đang tối ưu hóa bộ nhớ...' : 'Gộp tất cả ký ức (Tối ưu cho AI)'}
+              </button>
+            )}
+
             {!memories || memories.length === 0 ? (
               <p className="text-center text-slate-500 text-sm mt-10">AI chưa có ký ức nào.</p>
             ) : (

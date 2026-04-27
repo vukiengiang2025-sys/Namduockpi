@@ -159,6 +159,9 @@ TRẢ VỀ JSON DUY NHẤT:
     return JSON.parse(jsonStr) as AIInsight;
   } catch (error: any) {
     console.error('AI Insight Error:', error);
+    if (error.message?.includes('503') || error.message?.includes('high demand')) {
+      throw new Error('AI đang quá tải (Lỗi 503). Hãy thử lại sau vài giây hoặc vào phần "Ghi chú" -> "Ký ức AI" để "Gộp ký ức", giúp giảm tải dung lượng gửi cho AI.');
+    }
     throw new Error(error.message || 'Lỗi khi lấy đánh giá từ AI.');
   }
 }

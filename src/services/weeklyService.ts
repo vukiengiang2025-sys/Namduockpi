@@ -142,6 +142,9 @@ TRẢ VỀ JSON DUY NHẤT:
     return report;
   } catch (error: any) {
     console.error('Weekly Report Error:', error);
+    if (error.message?.includes('503') || error.message?.includes('high demand')) {
+      throw new Error('AI đang quá tải (Lỗi 503). Hãy thử lại sau vài giây hoặc vào trang Ghi chú để "Gộp ký ức" giúp AI đọc nhanh hơn.');
+    }
     throw new Error('Lỗi khi tạo báo cáo tuần: ' + error.message);
   }
 }
