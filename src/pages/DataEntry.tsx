@@ -80,10 +80,9 @@ function TableRow({ label, targetValue, onTargetChange, actualValue, onActualCha
 }
 
 export default function DataEntry() {
-  const { months, quarters, halfYears, updateMonth, updateQuarter, updateHalfYear } = useAppStore();
+  const { months, quarters, halfYears, updateMonth, updateQuarter, updateHalfYear, selectedMonthIndex, setSelectedMonthIndex } = useAppStore();
 
-  const now = new Date();
-  const currentMonthIndex = now.getMonth();
+  const currentMonthIndex = selectedMonthIndex;
   const currentQuarterIndex = Math.floor(currentMonthIndex / 3);
   const currentHalfYearIndex = Math.floor(currentMonthIndex / 6);
 
@@ -150,9 +149,20 @@ export default function DataEntry() {
       className="space-y-8"
     >
       <div className="px-5 pt-8 pb-4 sticky top-0 z-20 bg-slate-950/80 backdrop-blur-2xl border-b border-white/5 shadow-sm">
-        <div className="flex items-center gap-2 mb-1">
-           <span className="w-2 h-2 bg-blue-500 rounded-full"></span>
-           <span className="text-[10px] text-slate-400 uppercase tracking-widest">Bảng tính tự động</span>
+        <div className="flex items-center justify-between mb-1">
+          <div className="flex items-center gap-2">
+             <span className="w-2 h-2 bg-blue-500 rounded-full"></span>
+             <span className="text-[10px] text-slate-400 uppercase tracking-widest">Bảng tính tự động</span>
+          </div>
+          <select 
+            value={selectedMonthIndex}
+            onChange={(e) => setSelectedMonthIndex(Number(e.target.value))}
+            className="bg-slate-800/80 border border-white/10 rounded-lg px-2 py-1 text-xs text-white font-medium focus:ring-1 focus:ring-blue-500 outline-none cursor-pointer"
+          >
+            {Array(12).fill(0).map((_, i) => (
+              <option key={i} value={i}>Dữ liệu T{i + 1}</option>
+            ))}
+          </select>
         </div>
         <h1 className="text-2xl font-light text-white tracking-tight">Nhập Liệu <span className="font-bold">KPI</span></h1>
       </div>

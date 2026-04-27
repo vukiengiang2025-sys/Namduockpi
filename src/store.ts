@@ -28,14 +28,18 @@ interface AppState {
   months: MonthData[];
   quarters: QuarterData[];
   halfYears: HalfYearData[];
+  selectedMonthIndex: number;
   updateMonth: (index: number, data: Partial<MonthData>) => void;
   updateQuarter: (index: number, data: Partial<QuarterData>) => void;
   updateHalfYear: (index: number, data: Partial<HalfYearData>) => void;
+  setSelectedMonthIndex: (index: number) => void;
+  importData: (data: any) => void;
 }
 
 export const useAppStore = create<AppState>()(
   persist(
     (set) => ({
+      selectedMonthIndex: new Date().getMonth(),
       months: Array(12).fill(0).map(() => ({
         salesTarget: 0,
         salesActual: 0,
@@ -70,7 +74,13 @@ export const useAppStore = create<AppState>()(
         const newHs = [...state.halfYears];
         newHs[index] = { ...newHs[index], ...data };
         return { halfYears: newHs };
-      })
+      }),
+      setSelectedMonthIndex: (index: number) => set({ selectedMonthIndex: index }),
+      importData: (data: any) => set((state) => ({
+        months: data.months || state.months,
+        quarters: data.quarters || state.quarters,
+        halfYears: data.halfYears || state.halfYears,
+      }))
     }),
     {
       name: 'kpi-storage',

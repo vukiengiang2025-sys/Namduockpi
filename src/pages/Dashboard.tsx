@@ -2,7 +2,8 @@ import { useAppStore } from '../store';
 import { calc15DaysSalesKPI, calcCoverageKPI, calcSalesKPI, calcSKUKPI } from '../lib/kpi';
 import { formatPercent } from '../lib/utils';
 import { motion } from 'motion/react';
-import { Target, TrendingUp, Award } from 'lucide-react';
+import { Target, TrendingUp, Award, Download, Upload } from 'lucide-react';
+import { useRef } from 'react';
 
 function MetricCard({ title, value, icon: Icon, subtitle, isHighlight = false, colorParams = 'blue' }: any) {
   const containerClass = isHighlight 
@@ -32,10 +33,10 @@ function MetricCard({ title, value, icon: Icon, subtitle, isHighlight = false, c
 }
 
 export default function Dashboard() {
-  const { months, quarters, halfYears } = useAppStore();
+  const { months, quarters, halfYears, selectedMonthIndex, setSelectedMonthIndex } = useAppStore();
+  const fileInputRef = useRef<HTMLInputElement>(null);
 
-  const now = new Date();
-  const currentMonthIndex = now.getMonth();
+  const currentMonthIndex = selectedMonthIndex;
   const currentQuarterIndex = Math.floor(currentMonthIndex / 3);
   const currentHalfYearIndex = Math.floor(currentMonthIndex / 6);
 
@@ -94,6 +95,39 @@ export default function Dashboard() {
   const halfCoverageKPI = calcCoverageKPI(halfYear.coverageActual, halfYear.coverageTarget, 10, 15);
   const halfTotalKPI = halfSalesKPI + halfCoverageKPI + (halfYear.customPoints || 0);
 
+  const handleExport = () => {
+    const state = useAppStore.getState();
+    const dataToSave = {
+      months: state.months,
+      quarters: state.quarters,
+      halfYears: state.halfYears,
+    };
+    const dataStr = "data:text/json;charset=utf-8," + encodeURIComponent(JSON.stringify(dataToSave, null, 2));
+    const downloadAnchorNode = document.createElement('a');
+    downloadAnchorNode.setAttribute("href", dataStr);
+    downloadAnchorNode.setAttribute("download", "kpi_backup_" + new Date().toISOString().split('T')[0] + ".json");
+    document.body.appendChild(downloadAnchorNode);
+    downloadAnchorNode.click();
+    downloadAnchorNode.remove();
+  };
+
+  const handleImport = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (!file) return;
+    const reader = new FileReader();
+    reader.onload = (event) => {
+      try {
+        const json = JSON.parse(event.target?.result as string);
+        useAppStore.getState().importData(json);
+        alert('Phục hồi dữ liệu thành công!');
+      } catch (err) {
+        alert('File không hợp lệ!');
+      }
+    };
+    reader.readAsText(file);
+    if (fileInputRef.current) fileInputRef.current.value = '';
+  };
+
   return (
     <motion.div 
       initial={{ opacity: 0, y: 10, filter: 'blur(10px)' }}
@@ -102,9 +136,20 @@ export default function Dashboard() {
       className="space-y-8"
     >
       <div className="px-5 pt-8 pb-4 sticky top-0 z-20 bg-slate-950/80 backdrop-blur-2xl border-b border-white/5">
-        <div className="flex items-center gap-2 mb-1">
-           <span className="w-2 h-2 bg-emerald-500 rounded-full"></span>
-           <span className="text-[10px] text-slate-400 uppercase tracking-widest">Hệ thống báo cáo KPI</span>
+        <div className="flex items-center justify-between mb-1">
+          <div className="flex items-center gap-2">
+             <span className="w-2 h-2 bg-emerald-500 rounded-full"></span>
+             <span className="text-[10px] text-slate-400 uppercase tracking-widest font-medium">Hệ thống báo cáo KPI</span>
+          </div>
+          <select 
+            value={selectedMonthIndex}
+            onChange={(e) => setSelectedMonthIndex(Number(e.target.value))}
+            className="bg-slate-800/80 border border-white/10 rounded-lg px-2 py-1 text-xs text-white font-medium focus:ring-1 focus:ring-emerald-500 outline-none cursor-pointer"
+          >
+            {Array(12).fill(0).map((_, i) => (
+              <option key={i} value={i}>Dữ liệu T{i + 1}</option>
+            ))}
+          </select>
         </div>
         <h1 className="text-2xl font-light text-white tracking-tight">Tổng Quan <span className="font-bold">Kinh Doanh</span></h1>
       </div>
@@ -239,6 +284,37 @@ export default function Dashboard() {
             </div>
           </div>
         </section>
+
+        {/* Backup and Restore Section */}
+        <div className="bg-slate-900/40 rounded-3xl p-5 shadow-2xl border border-white/5 backdrop-blur-xl mt-4">
+          <h3 className="text-xs font-bold text-slate-400 uppercase tracking-widest px-1 mb-4">Dữ liệu & Sao lưu</h3>
+          <div className="grid grid-cols-2 gap-3">
+            <button
+              onClick={handleExport}
+              className="flex items-center justify-center gap-2 bg-blue-500/10 hover:bg-blue-500/20 text-blue-400 py-3 rounded-2xl border border-blue-500/20 transition-all text-sm font-medium"
+            >
+              <Download className="w-4 h-4" />
+              Tải xuống
+            </button>
+            <input 
+              type="file" 
+              accept=".json" 
+              className="hidden" 
+              ref={fileInputRef}
+              onChange={handleImport}
+            />
+            <button
+              onClick={() => fileInputRef.current?.click()}
+              className="flex items-center justify-center gap-2 bg-purple-500/10 hover:bg-purple-500/20 text-purple-400 py-3 rounded-2xl border border-purple-500/20 transition-all text-sm font-medium"
+            >
+              <Upload className="w-4 h-4" />
+              Tải lên
+            </button>
+          </div>
+          <p className="text-[10px] text-slate-500 text-center mt-3 px-2 leading-relaxed">
+            Lưu dữ liệu ra máy để có thể lấy lại dễ dàng khi cài lại app hoặc đem qua thiết bị khác.
+          </p>
+        </div>
 
       </div>
     </motion.div>
