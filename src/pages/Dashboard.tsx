@@ -4,6 +4,8 @@ import { formatPercent } from '../lib/utils';
 import { motion } from 'motion/react';
 import { Target, TrendingUp, Award, Download, Upload } from 'lucide-react';
 import { useRef } from 'react';
+import { Capacitor } from '@capacitor/core';
+import { Filesystem, Directory, Encoding } from '@capacitor/filesystem';
 
 function MetricCard({ title, value, icon: Icon, subtitle, isHighlight = false, colorParams = 'blue' }: any) {
   const containerClass = isHighlight 
@@ -95,20 +97,37 @@ export default function Dashboard() {
   const halfCoverageKPI = calcCoverageKPI(halfYear.coverageActual, halfYear.coverageTarget, 10, 15);
   const halfTotalKPI = halfSalesKPI + halfCoverageKPI + (halfYear.customPoints || 0);
 
-  const handleExport = () => {
-    const state = useAppStore.getState();
-    const dataToSave = {
-      months: state.months,
-      quarters: state.quarters,
-      halfYears: state.halfYears,
-    };
-    const dataStr = "data:text/json;charset=utf-8," + encodeURIComponent(JSON.stringify(dataToSave, null, 2));
-    const downloadAnchorNode = document.createElement('a');
-    downloadAnchorNode.setAttribute("href", dataStr);
-    downloadAnchorNode.setAttribute("download", "kpi_backup_" + new Date().toISOString().split('T')[0] + ".json");
-    document.body.appendChild(downloadAnchorNode);
-    downloadAnchorNode.click();
-    downloadAnchorNode.remove();
+  const handleExport = async () => {
+    try {
+      const state = useAppStore.getState();
+      const dataToSave = {
+        months: state.months,
+        quarters: state.quarters,
+        halfYears: state.halfYears,
+      };
+      const jsonStr = JSON.stringify(dataToSave, null, 2);
+      const fileName = `kpi_backup_${new Date().toISOString().split('T')[0]}.json`;
+
+      if (Capacitor.isNativePlatform()) {
+        await Filesystem.writeFile({
+          path: fileName,
+          data: jsonStr,
+          directory: Directory.Documents,
+          encoding: Encoding.UTF8,
+        });
+        alert(`Đã lưu file ${fileName} vào thư mục Documents của màn hình điện thoại.`);
+      } else {
+        const dataStr = "data:text/json;charset=utf-8," + encodeURIComponent(jsonStr);
+        const downloadAnchorNode = document.createElement('a');
+        downloadAnchorNode.setAttribute("href", dataStr);
+        downloadAnchorNode.setAttribute("download", fileName);
+        document.body.appendChild(downloadAnchorNode);
+        downloadAnchorNode.click();
+        downloadAnchorNode.remove();
+      }
+    } catch (e: any) {
+      alert('Lỗi khi lưu file: ' + e.message);
+    }
   };
 
   const handleImport = (e: React.ChangeEvent<HTMLInputElement>) => {
