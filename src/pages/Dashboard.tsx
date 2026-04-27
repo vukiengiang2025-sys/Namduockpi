@@ -2,12 +2,13 @@ import { useAppStore } from '../store';
 import { calc15DaysSalesKPI, calcCoverageKPI, calcSalesKPI, calcSKUKPI } from '../lib/kpi';
 import { formatPercent } from '../lib/utils';
 import { motion } from 'motion/react';
-import { Target, TrendingUp, Award, Download, Upload, PieChart, Activity, CheckCircle2, Clock, FileSpreadsheet } from 'lucide-react';
-import React, { useRef } from 'react';
+import { Target, TrendingUp, Award, Download, Upload, PieChart, Activity, CheckCircle2, Clock, FileSpreadsheet, AlertTriangle, Lightbulb, Sparkles, Loader2, BrainCircuit } from 'lucide-react';
+import React, { useRef, useState } from 'react';
 import { Capacitor } from '@capacitor/core';
 import { Filesystem, Directory, Encoding } from '@capacitor/filesystem';
 import * as XLSX from 'xlsx';
 import { APP_ICONS } from './Settings';
+import { getAIInsight, AIInsight } from '../services/aiService';
 
 function MetricCard({ title, value, icon: Icon, subtitle, isHighlight = false, colorParams = 'blue' }: any) {
   const containerClass = isHighlight 
@@ -39,6 +40,9 @@ function MetricCard({ title, value, icon: Icon, subtitle, isHighlight = false, c
 export default function Dashboard() {
   const { months, quarters, halfYears, selectedMonthIndex, setSelectedMonthIndex, settings } = useAppStore();
   const fileInputRef = useRef<HTMLInputElement>(null);
+  
+  const [isAnalyzing, setIsAnalyzing] = useState(false);
+  const [aiResult, setAiResult] = useState<AIInsight | null>(null);
 
   const realCurrentMonthIndex = new Date().getMonth();
   const currentMonthIndex = selectedMonthIndex;
@@ -102,6 +106,56 @@ export default function Dashboard() {
   const halfSalesKPI = calcSalesKPI(halfYear.salesActual, halfYear.salesTarget);
   const halfCoverageKPI = calcCoverageKPI(halfYear.coverageActual, halfYear.coverageTarget, 1);
   const halfTotalKPI = halfSalesKPI + halfCoverageKPI + (halfYear.customPoints || 0);
+
+  // Insights Logic
+  const currentDay = new Date().getDate();
+  const daysInMonth = new Date(new Date().getFullYear(), realCurrentMonthIndex + 1, 0).getDate();
+  const timeElapsedRatio = currentDay / daysInMonth;
+  const targetForSales = month.salesTarget || 1;
+  const actualForSales = month.salesActual || 0;
+  const salesRatio = actualForSales / targetForSales;
+  const isBehind = salesRatio < timeElapsedRatio;
+  const forecastedRatio = timeElapsedRatio > 0 ? salesRatio / timeElapsedRatio : 0;
+  
+  const avgDailySales = currentDay > 0 ? actualForSales / currentDay : 0;
+  const remainingTarget = Math.max(0, targetForSales - actualForSales);
+  const remainingDays = daysInMonth - currentDay;
+  const requiredDailySales = remainingDays > 0 ? remainingTarget / remainingDays : 0;
+  
+  const insight = (month.salesTarget && month.salesActual && currentMonthIndex === realCurrentMonthIndex) ? {
+    currentDay,
+    daysInMonth,
+    timeElapsedRatio,
+    salesRatio,
+    isBehind,
+    forecastedRatio,
+    avgDailySales,
+    requiredDailySales,
+    remainingDays
+  } : null;
+
+  const handleAnalyze = async () => {
+    if (!insight) return;
+    setIsAnalyzing(true);
+    setAiResult(null);
+    try {
+      const result = await getAIInsight(
+        insight.salesRatio * 100,
+        insight.timeElapsedRatio * 100,
+        insight.forecastedRatio * 100,
+        month.skuActual || 0,
+        month.coverageActual || 0,
+        insight.remainingDays,
+        insight.avgDailySales,
+        insight.requiredDailySales
+      );
+      setAiResult(result);
+    } catch (error: any) {
+      alert(error.message);
+    } finally {
+      setIsAnalyzing(false);
+    }
+  };
 
   const getStatusBadge = (currentIndex: number, realIndex: number) => {
     if (currentIndex === realIndex) return <span className="flex items-center gap-1 bg-yellow-500/20 text-yellow-500 text-[10px] px-2 py-0.5 rounded-full font-medium ml-2"><Clock className="w-3 h-3" />Đang diễn ra</span>;
@@ -223,7 +277,7 @@ export default function Dashboard() {
           <span className="font-mono text-white bg-slate-800/80 px-2 py-0.5 rounded text-xs border border-white/5">{monthCoverageKPI.toFixed(1)}</span>
         </li>
         <li className="flex justify-between items-center text-sm">
-          <span className="text-slate-400 text-xs">Tiến độ 15 ngày ({settings.kpiWeights?.month15Days || 5}đ)</span>
+          <span className="text-slate-400 text-xs">Tiến độ 15 ngày ({settings.kpiWeights?.month15Days || 5.5}đ)</span>
           <span className="font-mono text-white bg-slate-800/80 px-2 py-0.5 rounded text-xs border border-white/5">{month15DaysKPI.toFixed(1)}</span>
         </li>
         <li className="flex justify-between items-center text-sm">
@@ -270,6 +324,28 @@ export default function Dashboard() {
       </div>
 
       <div className="px-5 space-y-10 max-w-lg mx-auto">
+        {!aiResult && insight && (
+          <motion.div 
+            initial={{ opacity: 0, scale: 0.95 }}
+            animate={{ opacity: 1, scale: 1 }}
+            className="p-4 bg-gradient-to-br from-blue-600/20 to-indigo-600/20 rounded-3xl border border-blue-500/30 flex items-center justify-between gap-4 shadow-xl"
+          >
+            <div className="flex-1">
+              <h3 className="text-[12px] font-bold text-white mb-1 flex items-center gap-2">
+                <Sparkles className="w-3.5 h-3.5 text-blue-400" />
+                Daily Action Engine
+              </h3>
+              <p className="text-[10px] text-slate-400 leading-tight">Lập kế hoạch hôm nay dựa trên KPI & Ký ức hệ thống.</p>
+            </div>
+            <button 
+              onClick={handleAnalyze}
+              className="bg-blue-500 hover:bg-blue-400 text-white text-[10px] font-bold px-4 py-2 rounded-xl transition-all shadow-lg shrink-0"
+            >
+              Lập ngay
+            </button>
+          </motion.div>
+        )}
+
         {/* Month Section */}
         <section className="relative">
           <div className="absolute -left-5 top-0 bottom-0 w-1 bg-blue-500/20 rounded-r-lg"></div>
@@ -289,6 +365,114 @@ export default function Dashboard() {
                 <MonthHeaderStats />
                 <MonthDetailsInfo />
               </>
+            )}
+
+            {insight && (
+              <div className={`mt-2 p-4 rounded-3xl border backdrop-blur-xl ${insight.isBehind ? 'bg-red-500/10 border-red-500/20' : 'bg-emerald-500/10 border-emerald-500/20'}`}>
+                <div className="flex items-start gap-3">
+                  <div className={`p-2 rounded-full ${insight.isBehind ? 'bg-red-500/20 text-red-400' : 'bg-emerald-500/20 text-emerald-400'}`}>
+                    {insight.isBehind ? <AlertTriangle className="w-4 h-4" /> : <Lightbulb className="w-4 h-4" />}
+                  </div>
+                  <div className="flex-1">
+                    <h4 className={`text-sm font-semibold mb-1 ${insight.isBehind ? 'text-red-400' : 'text-emerald-400'}`}>
+                      {insight.isBehind ? 'Cảnh báo Tiến độ' : 'Tiến độ Tuyệt vời'}
+                    </h4>
+                    <p className="text-xs text-slate-300 leading-relaxed mb-3">
+                      Đã qua <span className="font-bold text-white">{(insight.timeElapsedRatio * 100).toFixed(0)}%</span> thời gian của tháng (ngày {insight.currentDay}/{insight.daysInMonth}), nhưng doanh số mới đạt <span className="font-bold text-white">{(insight.salesRatio * 100).toFixed(1)}%</span>.
+                      <br/>
+                      Dự báo cuối tháng: <span className="font-bold text-white">{(insight.forecastedRatio * 100).toFixed(1)}%</span> mục tiêu.
+                    </p>
+                    
+                    {/* Time vs Target Progress Bar */}
+                    <div className="space-y-4">
+                      <div className="flex flex-col gap-1">
+                        <div className="flex justify-between text-[10px] text-slate-400">
+                          <span>Quỹ thời gian</span>
+                          <span>{(insight.timeElapsedRatio * 100).toFixed(0)}%</span>
+                        </div>
+                        <div className="w-full bg-slate-950/50 rounded-full h-1.5 overflow-hidden">
+                          <div className="bg-slate-400 h-full rounded-full" style={{ width: `${Math.min(100, insight.timeElapsedRatio * 100)}%` }}></div>
+                        </div>
+                      </div>
+                      
+                      <div className="flex flex-col gap-1">
+                        <div className="flex justify-between text-[10px] text-slate-400">
+                          <span>Doanh số thực tế</span>
+                          <span>{(insight.salesRatio * 100).toFixed(1)}%</span>
+                        </div>
+                        <div className="w-full bg-slate-950/50 rounded-full h-1.5 overflow-hidden">
+                          <div className={`h-full rounded-full ${insight.isBehind ? 'bg-red-500' : 'bg-emerald-500'}`} style={{ width: `${Math.min(100, insight.salesRatio * 100)}%` }}></div>
+                        </div>
+                      </div>
+                      
+                      {/* AI Action */}
+                      <div className="mt-4 pt-4 border-t border-white/5">
+                        <button
+                          onClick={handleAnalyze}
+                          disabled={isAnalyzing}
+                          className="w-full flex items-center justify-center gap-2 bg-gradient-to-r from-blue-500/20 to-purple-500/20 hover:from-blue-500/30 hover:to-purple-500/30 text-blue-400 py-2 rounded-xl border border-blue-500/30 transition-all text-xs font-semibold disabled:opacity-50"
+                        >
+                          {isAnalyzing ? <Loader2 className="w-3 h-3 animate-spin" /> : <Sparkles className="w-3 h-3" />}
+                          {isAnalyzing ? 'Đang phân tích...' : 'Gợi ý Chiến lược với AI'}
+                        </button>
+                        
+                        {aiResult && (
+                          <motion.div initial={{ opacity: 0, height: 0 }} animate={{ opacity: 1, height: 'auto' }} className="mt-4 space-y-4">
+                            {/* Daily Target Highlight */}
+                            {aiResult.daily_target && (
+                              <div className="bg-gradient-to-br from-blue-500/20 to-purple-500/20 p-4 rounded-2xl border border-white/10 shadow-lg relative overflow-hidden">
+                                <div className="absolute top-0 right-0 p-2 opacity-20"><Target className="w-8 h-8" /></div>
+                                <p className="text-[10px] text-blue-300 uppercase tracking-widest font-bold mb-1">🎯 Mục tiêu hành động hôm nay</p>
+                                <p className="text-xl font-bold text-white tracking-tight leading-tight">{aiResult.daily_target}</p>
+                              </div>
+                            )}
+
+                            <div className="flex gap-2 items-start bg-slate-950/50 p-3 rounded-xl border border-white/5">
+                              <AlertTriangle className="w-4 h-4 text-orange-400 shrink-0 mt-0.5" />
+                              <div>
+                                <p className="text-[10px] text-slate-500 uppercase tracking-wider font-bold mb-0.5">Vấn đề chính</p>
+                                <p className="text-xs text-slate-300 leading-relaxed">{aiResult.main_issue}</p>
+                              </div>
+                            </div>
+
+                            <div className="bg-slate-950/50 p-3 rounded-xl border border-white/5">
+                               <p className="text-[10px] text-slate-500 uppercase tracking-wider font-bold mb-3 flex items-center gap-1.5"><CheckCircle2 className="w-3.5 h-3.5" /> Chiến thuật hành động</p>
+                               <ul className="space-y-3 text-xs text-slate-300">
+                                {aiResult.actions.map((act, i) => (
+                                  <li key={i} className="flex gap-2.5 items-start leading-tight group">
+                                    <span className={`min-w-2 h-2 rounded-full mt-1.5 ring-4 ring-white/5 ${
+                                      act.priority === 'high' ? 'bg-red-400' :
+                                      act.priority === 'medium' ? 'bg-yellow-400' :
+                                      'bg-slate-400'
+                                    }`}></span>
+                                    <span>{act.task}</span>
+                                  </li>
+                                ))}
+                              </ul>
+                            </div>
+
+                            {/* References / Memory Trace */}
+                            {aiResult.references && aiResult.references.length > 0 && (
+                              <div className="pt-2 px-1">
+                                <p className="text-[9px] text-slate-500 uppercase tracking-tighter mb-1.5 flex items-center gap-1">
+                                  <BrainCircuit className="w-3 h-3" /> Cơ sở phân tích từ Ký ức:
+                                </p>
+                                <div className="flex flex-wrap gap-1.5">
+                                  {aiResult.references.map((ref, idx) => (
+                                    <span key={idx} className="bg-white/5 px-2 py-0.5 rounded-md text-[9px] text-slate-400 border border-white/5 italic">
+                                      {ref}
+                                    </span>
+                                  ))}
+                                </div>
+                              </div>
+                            )}
+                          </motion.div>
+                        )}
+                      </div>
+                    </div>
+                  </div>
+                </div>
+              </div>
             )}
           </div>
         </section>

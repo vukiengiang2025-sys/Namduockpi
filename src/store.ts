@@ -34,6 +34,15 @@ export interface Note {
   tag?: 'urgent' | 'customer' | 'meeting' | 'other';
 }
 
+export interface Memory {
+  id: string;
+  title: string;
+  summary: string;
+  keyPoints: string[];
+  tags: string[];
+  createdAt: number;
+}
+
 export interface KPIWeights {
   sales: number;
   coverage: number;
@@ -59,6 +68,7 @@ interface AppState {
   halfYears: HalfYearData[];
   selectedMonthIndex: number;
   notes: Note[];
+  memories: Memory[];
   settings: AppSettings;
   updateMonth: (index: number, data: Partial<MonthData>) => void;
   updateQuarter: (index: number, data: Partial<QuarterData>) => void;
@@ -68,6 +78,8 @@ interface AppState {
   addNote: (note: Omit<Note, 'id' | 'createdAt'>) => void;
   toggleNote: (id: string) => void;
   deleteNote: (id: string) => void;
+  addMemory: (memory: Omit<Memory, 'id' | 'createdAt'>) => void;
+  deleteMemory: (id: string) => void;
   updateSettings: (settings: Partial<AppSettings>) => void;
 }
 
@@ -76,6 +88,7 @@ export const useAppStore = create<AppState>()(
     (set) => ({
       selectedMonthIndex: new Date().getMonth(),
       notes: [],
+      memories: [],
       settings: {
         geminiKey: '',
         themeColor: 'blue',
@@ -132,6 +145,12 @@ export const useAppStore = create<AppState>()(
       })),
       deleteNote: (id) => set((state) => ({
         notes: state.notes.filter(n => n.id !== id)
+      })),
+      addMemory: (memory) => set((state) => ({
+        memories: [{ ...memory, id: Math.random().toString(36).substring(2, 9), createdAt: Date.now() }, ...(state.memories || [])]
+      })),
+      deleteMemory: (id) => set((state) => ({
+        memories: (state.memories || []).filter(n => n.id !== id)
       })),
       updateSettings: (settings) => set((state) => ({
         settings: { ...state.settings, ...settings }

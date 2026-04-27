@@ -26,7 +26,10 @@ export default function App() {
                                      settings.fontFamily === 'mono' ? 'var(--font-mono)' : 
                                      'var(--font-sans)';
 
-  }, [settings.themeMode, settings.fontFamily]);
+    // Set document title
+    document.title = settings.appTitle || 'KPI Manager';
+
+  }, [settings.themeMode, settings.fontFamily, settings.appTitle]);
 
   const getThemeColors = () => {
     switch (settings.themeColor) {

@@ -28,7 +28,27 @@ export default function Settings() {
     fontFamily: 'sans',
     dashboardLayout: 'default',
     ...settings,
-    kpiWeights: settings.kpiWeights || { sales: 80, coverage: 10, month15Days: 5, sku: 7.5 },
+    kpiWeights: settings.kpiWeights || { sales: 80, coverage: 10, month15Days: 5.5, sku: 7.5 },
+    kpiRules: settings.kpiRules || {
+      salesThreshold: 0.8,
+      salesMaxMultiplier: 1.875,
+      coverageThreshold: 0.8,
+      coverageMaxMultiplier: 1.5,
+      month15DaysTargetRatio: 0.55,
+      month15DaysThreshold: 0.8,
+      month15DaysMaxMultiplier: 1.3636,
+      skuTable: [
+        { min: 4.7, scoreMult: 1 },
+        { min: 4.5, scoreMult: 0.933 },
+        { min: 4.3, scoreMult: 0.866 },
+        { min: 4.1, scoreMult: 0.8 },
+        { min: 3.9, scoreMult: 0.733 },
+        { min: 3.7, scoreMult: 0.666 },
+        { min: 3.5, scoreMult: 0.6 },
+        { min: 3.3, scoreMult: 0.533 },
+        { min: 3.1, scoreMult: 0.466 },
+      ]
+    },
     appIcon: settings.appIcon || 'hexagon'
   });
 
@@ -136,49 +156,84 @@ export default function Settings() {
         <p className="text-[10px] text-slate-500">Có thể dụng hình ảnh hoặc GIF làm hình nền. Nếu đường dẫn trống, hệ thống sẽ sử dụng hiệu ứng sương mù hiện đại.</p>
       </div>
 
-      {/* Custom KPI Weights */}
+      {/* Custom KPI Thresholds & Rules */}
       <div className="bg-slate-900/40 rounded-3xl p-5 shadow-2xl border border-white/5 backdrop-blur-xl space-y-4">
-        <div className="flex items-center gap-2 mb-2">
-          <Sliders className="w-5 h-5 text-slate-400" />
-          <h2 className="text-sm font-medium text-white">Trọng số KPI (Điểm tối đa)</h2>
+        <div className="flex items-center justify-between mb-2">
+          <div className="flex items-center gap-2">
+            <Sliders className="w-5 h-5 text-slate-400" />
+            <h2 className="text-sm font-medium text-white">Trọng số & Luật KPI (Rules)</h2>
+          </div>
         </div>
-        <p className="text-[10px] text-slate-500 mb-2">Phù hợp để thay đổi điểm số theo từng mùa thi đua.</p>
-        <div className="grid grid-cols-2 gap-4">
-          <div>
-            <label className="text-xs text-slate-400 block mb-1">Doanh số</label>
-            <input 
-              type="number" 
-              value={localSettings.kpiWeights.sales}
-              onChange={(e) => setLocalSettings({...localSettings, kpiWeights: {...localSettings.kpiWeights, sales: Number(e.target.value)}})}
-              className="w-full bg-slate-950/50 border border-white/10 rounded-xl px-3 py-2 text-sm text-white focus:outline-none focus:ring-2 focus:ring-slate-500"
-            />
+        <p className="text-[10px] text-slate-500 mb-2">Thay đổi tỷ trọng điểm của từng phần và tỷ lệ % tối thiểu để đạt điểm.</p>
+        
+        <div className="space-y-4">
+          <div className="grid grid-cols-2 gap-4">
+            <div className="p-3 bg-slate-950/50 rounded-xl border border-white/5">
+              <label className="text-[11px] font-semibold text-slate-300 block mb-2">Doanh Số</label>
+              <div className="space-y-2">
+                <div className="flex justify-between items-center text-xs">
+                  <span className="text-slate-500">Giới hạn tỉ lệ tối thiểu</span>
+                  <input type="number" step="0.1" value={localSettings.kpiRules?.salesThreshold} onChange={e => setLocalSettings(p => ({...p, kpiRules: {...p.kpiRules, salesThreshold: Number(e.target.value)} as any}))} className="w-16 bg-slate-900 border text-center border-white/10 rounded px-2 py-1 text-white text-xs"/>
+                </div>
+                <div className="flex justify-between items-center text-xs">
+                  <span className="text-slate-500">Hệ số nhân tối đa</span>
+                  <input type="number" step="0.1" value={localSettings.kpiRules?.salesMaxMultiplier} onChange={e => setLocalSettings(p => ({...p, kpiRules: {...p.kpiRules, salesMaxMultiplier: Number(e.target.value)} as any}))} className="w-16 bg-slate-900 border text-center border-white/10 rounded px-2 py-1 text-white text-xs"/>
+                </div>
+                <div className="flex justify-between items-center text-xs">
+                  <span className="text-slate-500">Trọng số (Điểm)</span>
+                  <input type="number" value={localSettings.kpiWeights.sales} onChange={e => setLocalSettings(p => ({...p, kpiWeights: {...p.kpiWeights, sales: Number(e.target.value)}}))} className="w-16 bg-blue-500/20 text-blue-400 font-bold border text-center border-blue-500/30 rounded px-2 py-1 text-xs"/>
+                </div>
+              </div>
+            </div>
+
+            <div className="p-3 bg-slate-950/50 rounded-xl border border-white/5">
+              <label className="text-[11px] font-semibold text-slate-300 block mb-2">Bao Phủ</label>
+              <div className="space-y-2">
+                <div className="flex justify-between items-center text-xs">
+                  <span className="text-slate-500">Giới hạn tỉ lệ tối thiểu</span>
+                  <input type="number" step="0.1" value={localSettings.kpiRules?.coverageThreshold} onChange={e => setLocalSettings(p => ({...p, kpiRules: {...p.kpiRules, coverageThreshold: Number(e.target.value)} as any}))} className="w-16 bg-slate-900 border text-center border-white/10 rounded px-2 py-1 text-white text-xs"/>
+                </div>
+                <div className="flex justify-between items-center text-xs">
+                  <span className="text-slate-500">Hệ số nhân tối đa</span>
+                  <input type="number" step="0.1" value={localSettings.kpiRules?.coverageMaxMultiplier} onChange={e => setLocalSettings(p => ({...p, kpiRules: {...p.kpiRules, coverageMaxMultiplier: Number(e.target.value)} as any}))} className="w-16 bg-slate-900 border text-center border-white/10 rounded px-2 py-1 text-white text-xs"/>
+                </div>
+                <div className="flex justify-between items-center text-xs">
+                  <span className="text-slate-500">Trọng số (Điểm)</span>
+                  <input type="number" value={localSettings.kpiWeights.coverage} onChange={e => setLocalSettings(p => ({...p, kpiWeights: {...p.kpiWeights, coverage: Number(e.target.value)}}))} className="w-16 bg-blue-500/20 text-blue-400 font-bold border text-center border-blue-500/30 rounded px-2 py-1 text-xs"/>
+                </div>
+              </div>
+            </div>
           </div>
-          <div>
-            <label className="text-xs text-slate-400 block mb-1">Bao phủ (Tháng)</label>
-            <input 
-              type="number" 
-              value={localSettings.kpiWeights.coverage}
-              onChange={(e) => setLocalSettings({...localSettings, kpiWeights: {...localSettings.kpiWeights, coverage: Number(e.target.value)}})}
-              className="w-full bg-slate-950/50 border border-white/10 rounded-xl px-3 py-2 text-sm text-white focus:outline-none focus:ring-2 focus:ring-slate-500"
-            />
-          </div>
-          <div>
-            <label className="text-xs text-slate-400 block mb-1">Tiến độ 15 ngày</label>
-            <input 
-              type="number" 
-              value={localSettings.kpiWeights.month15Days}
-              onChange={(e) => setLocalSettings({...localSettings, kpiWeights: {...localSettings.kpiWeights, month15Days: Number(e.target.value)}})}
-              className="w-full bg-slate-950/50 border border-white/10 rounded-xl px-3 py-2 text-sm text-white focus:outline-none focus:ring-2 focus:ring-slate-500"
-            />
-          </div>
-          <div>
-            <label className="text-xs text-slate-400 block mb-1">SKU</label>
-            <input 
-              type="number" 
-              value={localSettings.kpiWeights.sku}
-              onChange={(e) => setLocalSettings({...localSettings, kpiWeights: {...localSettings.kpiWeights, sku: Number(e.target.value)}})}
-              className="w-full bg-slate-950/50 border border-white/10 rounded-xl px-3 py-2 text-sm text-white focus:outline-none focus:ring-2 focus:ring-slate-500"
-            />
+          
+          <div className="grid grid-cols-2 gap-4">
+            <div className="p-3 bg-slate-950/50 rounded-xl border border-white/5">
+              <label className="text-[11px] font-semibold text-slate-300 block mb-2">Tiến độ 15 Ngày (11 Ngày)</label>
+              <div className="space-y-2">
+                <div className="flex justify-between items-center text-xs">
+                  <span className="text-slate-500">Tỉ lệ mục tiêu</span>
+                  <input type="number" step="0.05" value={localSettings.kpiRules?.month15DaysTargetRatio} onChange={e => setLocalSettings(p => ({...p, kpiRules: {...p.kpiRules, month15DaysTargetRatio: Number(e.target.value)} as any}))} className="w-16 bg-slate-900 border text-center border-white/10 rounded px-2 py-1 text-white text-xs"/>
+                </div>
+                <div className="flex justify-between items-center text-xs">
+                  <span className="text-slate-500">Ngưỡng tối thiểu</span>
+                  <input type="number" step="0.1" value={localSettings.kpiRules?.month15DaysThreshold} onChange={e => setLocalSettings(p => ({...p, kpiRules: {...p.kpiRules, month15DaysThreshold: Number(e.target.value)} as any}))} className="w-16 bg-slate-900 border text-center border-white/10 rounded px-2 py-1 text-white text-xs"/>
+                </div>
+                <div className="flex justify-between items-center text-xs">
+                  <span className="text-slate-500">Trọng số (Điểm)</span>
+                  <input type="number" value={localSettings.kpiWeights.month15Days} onChange={e => setLocalSettings(p => ({...p, kpiWeights: {...p.kpiWeights, month15Days: Number(e.target.value)}}))} className="w-16 bg-blue-500/20 text-blue-400 font-bold border text-center border-blue-500/30 rounded px-2 py-1 text-xs"/>
+                </div>
+              </div>
+            </div>
+
+            <div className="p-3 bg-slate-950/50 rounded-xl border border-white/5">
+              <label className="text-[11px] font-semibold text-slate-300 block mb-2">SKU</label>
+              <div className="space-y-2">
+                <p className="text-[10px] text-slate-500 leading-tight">Điểm SKU sẽ được nội suy dựa trên cấu hình mảng trong bộ nhớ. Hiện tại:</p>
+                <div className="flex justify-between items-center text-xs mt-2">
+                  <span className="text-slate-500">Trọng số (Điểm Max)</span>
+                  <input type="number" step="0.5" value={localSettings.kpiWeights.sku} onChange={e => setLocalSettings(p => ({...p, kpiWeights: {...p.kpiWeights, sku: Number(e.target.value)}}))} className="w-16 bg-blue-500/20 text-blue-400 font-bold border text-center border-blue-500/30 rounded px-2 py-1 text-xs"/>
+                </div>
+              </div>
+            </div>
           </div>
         </div>
       </div>
@@ -196,6 +251,13 @@ export default function Settings() {
           onChange={(e) => setLocalSettings({...localSettings, appTitle: e.target.value})}
           className="w-full bg-slate-950/50 border border-white/10 rounded-xl px-4 py-3 text-sm text-white focus:outline-none focus:ring-2 focus:ring-slate-500"
         />
+        <div className="p-3 bg-blue-500/10 border border-blue-500/20 rounded-xl text-[10px] text-blue-200 leading-relaxed mt-2">
+          <p className="font-bold mb-1">Lưu ý khi biên dịch APK (GitHub Actions):</p>
+          <ul className="list-disc pl-4 space-y-1">
+            <li>Để đổi tên app hiển thị ngoài màn hình điện thoại, bạn phải sửa biến <code>appName</code> trong file <code>capacitor.config.ts</code> trên repo.</li>
+            <li>Để đổi Logo App cài đặt trên màn hình, hãy tải lên ảnh <code>icon.png</code> và <code>splash.png</code> vào thư mục <code>resources</code> trên repo, sau đó chạy lệnh <code>npx capacitor-assets generate</code> nếu bạn kéo code về build offline, hoặc commit trực tiếp để GitHub Actions tự generate.</li>
+          </ul>
+        </div>
       </div>
 
       {/* Gemini API Key */}
