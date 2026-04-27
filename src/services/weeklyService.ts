@@ -73,7 +73,7 @@ TRẢ VỀ JSON DUY NHẤT:
 
   try {
     const response = await ai.models.generateContent({
-      model: state.settings.geminiModel || 'gemini-1.5-flash',
+      model: state.settings.geminiModel || 'gemini-3-flash-preview',
       contents: prompt,
       config: {
         temperature: 0.1,
@@ -81,7 +81,7 @@ TRẢ VỀ JSON DUY NHẤT:
       }
     });
 
-    const text = response.text();
+    const text = response.text;
     if (!text) throw new Error('AI không phản hồi.');
     
     let jsonStr = text.trim();

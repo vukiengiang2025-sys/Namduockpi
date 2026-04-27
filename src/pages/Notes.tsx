@@ -1,10 +1,11 @@
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useRef } from 'react';
 import { motion, AnimatePresence } from 'motion/react';
 import { useAppStore } from '../store';
-import { Plus, Trash2, CheckCircle, Circle, Bell, BrainCircuit, Sparkles, Loader2, ChevronDown, ChevronUp } from 'lucide-react';
+import { Plus, Trash2, CheckCircle, Circle, Bell, BrainCircuit, Sparkles, Loader2, ChevronDown, ChevronUp, FileUp, FileText, X } from 'lucide-react';
 import { LocalNotifications } from '@capacitor/local-notifications';
 import { Capacitor } from '@capacitor/core';
 import { summarizeAsMemory } from '../services/memoryService';
+import { parseFile } from '../utils/fileParser';
 
 export default function Notes() {
   const { notes, addNote, toggleNote, deleteNote, memories, addMemory, deleteMemory } = useAppStore();
@@ -18,6 +19,8 @@ export default function Notes() {
   const [isProcessingMemory, setIsProcessingMemory] = useState(false);
   const [expandedMemoryId, setExpandedMemoryId] = useState<string | null>(null);
   const [activeTab, setActiveTab] = useState<'notes' | 'memories'>('notes');
+  const [selectedFile, setSelectedFile] = useState<File | null>(null);
+  const fileInputRef = useRef<HTMLInputElement>(null);
 
   // Request permissions on init
   useEffect(() => {
@@ -81,13 +84,31 @@ export default function Notes() {
     setSelectedTag('');
   };
 
+  const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    if (e.target.files && e.target.files[0]) {
+      setSelectedFile(e.target.files[0]);
+    }
+  };
+
   const handleAddMemory = async () => {
-    if (!newMemoryText.trim()) return;
+    if (!newMemoryText.trim() && !selectedFile) return;
+    
     setIsProcessingMemory(true);
     try {
-      const memory = await summarizeAsMemory(newMemoryText);
+      let finalContent = newMemoryText;
+
+      if (selectedFile) {
+        const parsedText = await parseFile(selectedFile);
+        finalContent = finalContent 
+          ? `Nội dung mô tả: ${finalContent}\n\nDữ liệu từ file (${selectedFile.name}):\n${parsedText}`
+          : parsedText;
+      }
+
+      const memory = await summarizeAsMemory(finalContent);
       addMemory(memory);
       setNewMemoryText('');
+      setSelectedFile(null);
+      if (fileInputRef.current) fileInputRef.current.value = '';
       alert('Đã tóm tắt và lưu Ký ức thành công!');
     } catch (error: any) {
       alert(error.message);
@@ -260,14 +281,61 @@ export default function Notes() {
               Nạp dữ liệu cho AI
             </h2>
             <p className="text-xs text-slate-400 mb-4">
-              Dán nội dung chính sách, sản phẩm, khuyến mãi... AI sẽ đọc, tóm tắt và ghi nhớ để tư vấn chiến lược cho bạn mỗi ngày.
+              Nạp dữ liệu (văn bản hoặc file Excel, PDF, Docx). AI sẽ đọc, tóm tắt và ghi nhớ để tư vấn chiến lược cho bạn mỗi ngày.
             </p>
             <div className="flex flex-col gap-3">
+              <div 
+                onClick={() => fileInputRef.current?.click()}
+                className={`border-2 border-dashed rounded-2xl p-6 transition-all cursor-pointer flex flex-col items-center justify-center gap-2 ${
+                  selectedFile 
+                    ? 'border-purple-500/50 bg-purple-500/5' 
+                    : 'border-white/10 hover:border-purple-500/30 hover:bg-white/5'
+                }`}
+              >
+                <input 
+                  type="file" 
+                  ref={fileInputRef}
+                  onChange={handleFileChange}
+                  accept=".pdf,.docx,.xlsx,.xls,.txt"
+                  className="hidden"
+                />
+                
+                {selectedFile ? (
+                  <div className="flex items-center gap-3 w-full">
+                    <div className="w-10 h-10 bg-purple-500/20 rounded-xl flex items-center justify-center text-purple-400">
+                      <FileText className="w-6 h-6" />
+                    </div>
+                    <div className="flex-1 overflow-hidden">
+                      <p className="text-sm font-medium text-white truncate">{selectedFile.name}</p>
+                      <p className="text-[10px] text-slate-500 uppercase">{(selectedFile.size / 1024).toFixed(1)} KB</p>
+                    </div>
+                    <button 
+                      onClick={(e) => {
+                        e.stopPropagation();
+                        setSelectedFile(null);
+                        if (fileInputRef.current) fileInputRef.current.value = '';
+                      }}
+                      className="p-1.5 hover:bg-white/10 rounded-lg text-slate-400"
+                    >
+                      <X className="w-4 h-4" />
+                    </button>
+                  </div>
+                ) : (
+                  <>
+                    <div className="w-12 h-12 bg-white/5 rounded-full flex items-center justify-center text-slate-400 mb-1">
+                      <FileUp className="w-6 h-6" />
+                    </div>
+                    <p className="text-sm font-medium text-slate-300">Tải lên tài liệu</p>
+                    <p className="text-[10px] text-slate-500">Hỗ trợ PDF, Docx, Excel, Txt</p>
+                  </>
+                )}
+              </div>
+
               <textarea 
-                placeholder="Dán nội dung văn bản vào đây..." 
+                placeholder="Mô tả thêm về tài liệu hoặc dán nội dung văn bản..." 
                 value={newMemoryText}
                 onChange={(e) => setNewMemoryText(e.target.value)}
-                rows={4}
+                rows={3}
                 className="w-full bg-slate-950/50 border border-white/10 rounded-xl px-4 py-3 text-sm text-white focus:outline-none focus:ring-2 focus:ring-purple-500 resize-none font-sans"
               />
               <button 

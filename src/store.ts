@@ -229,7 +229,7 @@ export const useAppStore = create<AppState>()(
       lastInsight: null,
       settings: {
         geminiKey: '',
-        geminiModel: 'gemini-1.5-flash',
+        geminiModel: 'gemini-3-flash-preview',
         themeColor: 'blue',
         appTitle: 'Hệ thống báo cáo KPI'
       },
