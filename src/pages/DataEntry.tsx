@@ -121,7 +121,7 @@ export default function DataEntry() {
   const monthSalesRatio = formatPercent(month.salesActual, month.salesTarget);
   const monthCoverageRatio = formatPercent(month.coverageActual, month.coverageTarget);
   const monthSalesKPI = calcSalesKPI(month.salesActual, month.salesTarget);
-  const monthCoverageKPI = calcCoverageKPI(month.coverageActual, month.coverageTarget, 5, 7.5);
+  const monthCoverageKPI = calcCoverageKPI(month.coverageActual, month.coverageTarget, 0.5);
   const month15DaysKPI = calc15DaysSalesKPI(month.sales15DaysActual, month.salesTarget);
   const month15DaysRatio = formatPercent(month.sales15DaysActual, month.salesTarget);
   const monthSKUKPI = calcSKUKPI(month.skuActual);
@@ -131,15 +131,15 @@ export default function DataEntry() {
   const quarterSalesRatio = formatPercent(quarter.salesActual, quarter.salesTarget);
   const quarterCoverageRatio = formatPercent(quarter.coverageActual, quarter.coverageTarget);
   const quarterSalesKPI = calcSalesKPI(quarter.salesActual, quarter.salesTarget);
-  const quarterCoverageKPI = calcCoverageKPI(quarter.coverageActual, quarter.coverageTarget, 10, 15);
-  const quarterTotalKPI = quarterSalesKPI + quarterCoverageKPI + (quarter.custom1Points || 0) + (quarter.custom2Points || 0);
+  const quarterCoverageKPI = calcCoverageKPI(quarter.coverageActual, quarter.coverageTarget, 1);
+  const quarterTotalKPI = quarterSalesKPI + quarterCoverageKPI + (quarterCustom.custom1Points || 0) + (quarterCustom.custom2Points || 0);
 
   // HalfYear Calcs
   const halfSalesRatio = formatPercent(halfYear.salesActual, halfYear.salesTarget);
   const halfCoverageRatio = formatPercent(halfYear.coverageActual, halfYear.coverageTarget);
   const halfSalesKPI = calcSalesKPI(halfYear.salesActual, halfYear.salesTarget);
-  const halfCoverageKPI = calcCoverageKPI(halfYear.coverageActual, halfYear.coverageTarget, 10, 15);
-  const halfTotalKPI = halfSalesKPI + halfCoverageKPI + (halfYear.customPoints || 0);
+  const halfCoverageKPI = calcCoverageKPI(halfYear.coverageActual, halfYear.coverageTarget, 1);
+  const halfTotalKPI = halfSalesKPI + halfCoverageKPI + (halfCustom.customPoints || 0);
 
   return (
     <motion.div 

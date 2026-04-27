@@ -1,10 +1,41 @@
-@import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap');
+@import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&family=Playfair+Display:wght@400;500;600;700&family=JetBrains+Mono:wght@400;500;700&display=swap');
 @import "tailwindcss";
 
 @theme {
   --font-sans: "Inter", ui-sans-serif, system-ui, sans-serif;
+  --font-serif: "Playfair Display", ui-serif, Georgia, serif;
+  --font-mono: "JetBrains Mono", ui-monospace, SFMono-Regular, monospace;
+}
+
+body.light-mode {
+  @apply bg-slate-50 text-slate-800;
+}
+body.light-mode .bg-slate-950,
+body.light-mode .bg-slate-900\/60,
+body.light-mode .bg-slate-950\/80 {
+  @apply bg-white/90!;
+}
+body.light-mode .bg-slate-900\/40 {
+  @apply bg-white! shadow-xl! shadow-slate-200/50! border-slate-200/50!;
+}
+body.light-mode .text-white {
+  @apply text-slate-900!;
+}
+body.light-mode .border-white\/5,
+body.light-mode .border-white\/10 {
+  @apply border-slate-200!;
+}
+body.light-mode .text-slate-400 {
+  @apply text-slate-500!;
+}
+body.light-mode .text-slate-300 {
+  @apply text-slate-600!;
+}
+body.light-mode .bg-slate-950\/50,
+body.light-mode .bg-slate-800\/80 {
+  @apply bg-slate-50! text-slate-800!;
 }
 
 body {
-  @apply bg-slate-950 text-slate-200 font-sans antialiased overflow-x-hidden;
+  @apply bg-slate-950 text-slate-200 font-sans antialiased overflow-x-hidden transition-colors duration-300;
 }
