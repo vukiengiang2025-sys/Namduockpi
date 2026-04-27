@@ -43,6 +43,110 @@ export interface Memory {
   createdAt: number;
 }
 
+export interface TaskLog {
+  id: string;
+  taskId: string;
+  text: string;
+  planned: number;
+  done: number;
+  kpiAtStart: number;
+  kpiAtEnd: number;
+  timestamp: number;
+  type?: 'coverage' | 'sales' | 'sku' | 'other';
+}
+
+export interface UserProfile {
+  skills: {
+    coverage: number; // 0.0 - 2.0 (1.0 is baseline)
+    sales: number;
+    sku: number;
+  };
+  preferredHours?: {
+    morning: number; // weight
+    afternoon: number;
+  };
+}
+
+export interface StrategyLog {
+  id: string;
+  focus: string;
+  successScore: number; // 0-100 based on KPI growth vs target
+  monthIndex: number;
+  timestamp: number;
+}
+
+export interface DailyTask {
+  id: string;
+  text: string;
+  target?: number;
+  done: number;
+  isCompleted: boolean;
+  priority: 'high' | 'medium' | 'low';
+  expectedImpact?: string;
+  confidence?: number;
+  createdAt: number;
+  kpiAtStart?: number;
+}
+
+export interface WeeklyReport {
+  id: string;
+  startDate: string;
+  endDate: string;
+  monthIndex: number;
+  stats: {
+    avgKpiScore: number;
+    salesGrowth: number;
+    tasksCompletionRate: number;
+    topPerformers: string[];
+    attribution: {
+      organic: number; // % contribution from trend
+      effort: number;  // % contribution from actions
+    };
+  };
+  analysis: {
+    why: string;
+    focus: string;
+    actionPlan: string[];
+    bestActionType: string;
+  };
+  createdAt: number;
+}
+
+export interface AIAction {
+  task: string;
+  priority: 'high' | 'medium' | 'low';
+  target?: number;
+  impact?: string;
+  confidence: number;
+  confidenceDetails?: {
+    dataQuality: number;
+    historicalSupport: number;
+    memoryMatch: number;
+  };
+  type?: 'coverage' | 'sales' | 'sku' | 'other';
+}
+
+export interface AIInsight {
+  status: 'tốt' | 'nguy hiểm' | 'rất nguy hiểm' | string;
+  main_issue: string;
+  actions: AIAction[];
+  daily_target?: string;
+  references?: string[];
+  riskAlert?: string;
+}
+
+export interface DailySnapshot {
+  date: string; // YYYY-MM-DD
+  timestamp: number;
+  salesActual: number;
+  coverageActual: number;
+  skuActual: number;
+  kpiScore: number;
+  tasksCompleted: number;
+  tasksTotal: number;
+}
+
+
 export interface KPIWeights {
   sales: number;
   coverage: number;
@@ -52,6 +156,7 @@ export interface KPIWeights {
 
 export interface AppSettings {
   geminiKey: string;
+  geminiModel?: string;
   themeColor: string;
   appTitle?: string;
   appIcon?: string;
@@ -69,6 +174,13 @@ interface AppState {
   selectedMonthIndex: number;
   notes: Note[];
   memories: Memory[];
+  dailyTasks: DailyTask[];
+  dailySnapshots: DailySnapshot[];
+  weeklyReports: WeeklyReport[];
+  taskLogs: TaskLog[];
+  strategyLogs: StrategyLog[];
+  userProfile: UserProfile;
+  lastInsight: AIInsight | null;
   settings: AppSettings;
   updateMonth: (index: number, data: Partial<MonthData>) => void;
   updateQuarter: (index: number, data: Partial<QuarterData>) => void;
@@ -80,6 +192,15 @@ interface AppState {
   deleteNote: (id: string) => void;
   addMemory: (memory: Omit<Memory, 'id' | 'createdAt'>) => void;
   deleteMemory: (id: string) => void;
+  setDailyTasks: (tasks: Omit<DailyTask, 'id' | 'createdAt' | 'done' | 'isCompleted'>[], currentKpi?: number) => void;
+  toggleDailyTask: (id: string) => void;
+  updateDailyTaskProgress: (id: string, done: number) => void;
+  addDailySnapshot: (snapshot: DailySnapshot) => void;
+  addWeeklyReport: (report: WeeklyReport) => void;
+  logTask: (log: Omit<TaskLog, 'id' | 'timestamp'>) => void;
+  addStrategyLog: (log: Omit<StrategyLog, 'id' | 'timestamp'>) => void;
+  updateUserProfile: (profile: Partial<UserProfile>) => void;
+  setLastInsight: (insight: AIInsight | null) => void;
   updateSettings: (settings: Partial<AppSettings>) => void;
 }
 
@@ -89,8 +210,26 @@ export const useAppStore = create<AppState>()(
       selectedMonthIndex: new Date().getMonth(),
       notes: [],
       memories: [],
+      dailyTasks: [],
+      dailySnapshots: [],
+      weeklyReports: [],
+      taskLogs: [],
+      strategyLogs: [],
+      userProfile: {
+        skills: {
+          coverage: 1.0,
+          sales: 1.0,
+          sku: 1.0
+        },
+        preferredHours: {
+          morning: 1.2,
+          afternoon: 0.8
+        }
+      },
+      lastInsight: null,
       settings: {
         geminiKey: '',
+        geminiModel: 'gemini-1.5-flash',
         themeColor: 'blue',
         appTitle: 'Hệ thống báo cáo KPI'
       },
@@ -152,6 +291,38 @@ export const useAppStore = create<AppState>()(
       deleteMemory: (id) => set((state) => ({
         memories: (state.memories || []).filter(n => n.id !== id)
       })),
+      setDailyTasks: (tasks, currentKpi) => set({
+        dailyTasks: tasks.map(t => ({
+          ...t,
+          id: Math.random().toString(36).substring(2, 9),
+          createdAt: Date.now(),
+          done: 0,
+          isCompleted: false,
+          kpiAtStart: currentKpi
+        }))
+      }),
+      toggleDailyTask: (id) => set((state) => ({
+        dailyTasks: state.dailyTasks.map(t => t.id === id ? { ...t, isCompleted: !t.isCompleted, done: !t.isCompleted ? (t.target || 0) : 0 } : t)
+      })),
+      updateDailyTaskProgress: (id, done) => set((state) => ({
+        dailyTasks: state.dailyTasks.map(t => t.id === id ? { ...t, done, isCompleted: t.target ? done >= t.target : t.isCompleted } : t)
+      })),
+      addDailySnapshot: (snapshot) => set((state) => ({
+        dailySnapshots: [...state.dailySnapshots.filter(s => s.date !== snapshot.date), snapshot].slice(-60) // Keep 2 months
+      })),
+      addWeeklyReport: (report) => set((state) => ({
+        weeklyReports: [report, ...state.weeklyReports].slice(0, 52) // Keep 1 year
+      })),
+      logTask: (log) => set((state) => ({
+        taskLogs: [{ ...log, id: Math.random().toString(36).substring(2, 9), timestamp: Date.now() }, ...state.taskLogs].slice(0, 100)
+      })),
+      addStrategyLog: (log) => set((state) => ({
+        strategyLogs: [{ ...log, id: Math.random().toString(36).substring(2, 9), timestamp: Date.now() }, ...state.strategyLogs].slice(0, 50)
+      })),
+      updateUserProfile: (profile) => set((state) => ({
+        userProfile: { ...state.userProfile, ...profile }
+      })),
+      setLastInsight: (lastInsight) => set({ lastInsight }),
       updateSettings: (settings) => set((state) => ({
         settings: { ...state.settings, ...settings }
       }))

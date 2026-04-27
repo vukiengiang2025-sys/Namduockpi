@@ -1,23 +1,13 @@
 import { GoogleGenAI } from '@google/genai';
-import { useAppStore } from '../store';
-
-export interface AIAction {
-  task: string;
-  priority: 'high' | 'medium' | 'low';
-}
-
-export interface AIInsight {
-  status: 'tốt' | 'nguy hiểm' | 'rất nguy hiểm' | string;
-  main_issue: string;
-  actions: AIAction[];
-  daily_target?: string;
-  references?: string[]; // IDs or titles of memories used
-}
+import { useAppStore, AIAction, AIInsight, Memory } from '../store';
 
 function scoreMemory(memory: Memory, status: string, salesRatio: number): number {
   let score = 0;
   const now = Date.now();
   const ageDays = (now - memory.createdAt) / (1000 * 60 * 60 * 24);
+
+  // Expiry check: if memory is > 45 days old, it's likely obsolete for FMCG
+  if (ageDays > 45) return -1;
 
   // Recency: newer is better (up to 1 point)
   score += Math.max(0, 1 - (ageDays / 30));
@@ -60,10 +50,30 @@ export async function getAIInsight(
   // Score and pick top 5 memories
   const scoredMemories = allMemories
     .map(m => ({ memory: m, score: scoreMemory(m, roughStatus, salesPercent / 100) }))
+    .filter(m => m.score > 0)
     .sort((a, b) => b.score - a.score)
     .slice(0, 5);
 
   const ai = new GoogleGenAI({ apiKey });
+
+  // Strategic Alignment: Fetch latest weekly focus
+  const latestWeeklyReport = state.weeklyReports?.[0];
+  const strategicConstraint = latestWeeklyReport 
+    ? `\nCHIẾN LƯỢC TUẦN (BẮT BUỘC): ${latestWeeklyReport.analysis.focus}`
+    : '';
+
+  // User Profile Context
+  const userProfile = state.userProfile;
+  const userSkillContext = `\nĐẶC ĐIỂM NGƯỜI DÙNG:
+- Kỹ năng Coverage: ${userProfile.skills.coverage.toFixed(1)}x (Baseline 1.0)
+- Kỹ năng Sales: ${userProfile.skills.sales.toFixed(1)}x
+- Kỹ năng SKU: ${userProfile.skills.sku.toFixed(1)}x`;
+
+  // Historical Strategy Context
+  const strategyLogs = state.strategyLogs.slice(0, 3);
+  const historyContext = strategyLogs.length > 0
+    ? `\nLỊCH SỬ CHIẾN LƯỢC HIỆU QUẢ:\n` + strategyLogs.map(l => `- Tập trung: ${l.focus}, Điểm thành công: ${l.successScore}/100`).join('\n')
+    : '';
 
   // Format memories context
   let memoryContext = '';
@@ -73,42 +83,63 @@ export async function getAIInsight(
     ).join('\n');
   }
 
-  const prompt = `Bạn là một trợ lý ảo quản lý bán hàng (FMCG/Dược) có "trí nhớ".
+  const prompt = `Bạn là một chuyên gia quản lý bán hàng FMCG/Dược thông minh.
+Nhiệm vụ: Phân tích dữ liệu và đề xuất "Chiến thuật đánh trận" hằng ngày (Daily Battle Plan).
 
 DỮ LIỆU HIỆN TẠI:
 - % Doanh số đạt: ${salesPercent.toFixed(1)}%
 - % Thời gian trôi qua: ${timePercent.toFixed(0)}%
 - Dự báo cuối tháng: ${forecast.toFixed(1)}%
-- SKU trung bình: ${sku.toFixed(1)}
+- SKU hiện tại: ${sku.toFixed(1)}
 - Độ phủ (Coverage): ${coverage.toFixed(1)}
 - Số ngày còn lại: ${remainingDays}
 - Năng suất hiện tại: ${avgDailySales.toFixed(1)}/ngày
 - Năng suất CẦN THIẾT: ${requiredDailySales.toFixed(1)}/ngày
+${strategicConstraint}
+${userSkillContext}
+${historyContext}
 ${memoryContext}
 
-YÊU CẦU:
+QUY TẮC CÁ NHÂN HOÁ:
+1. Ưu tiên các task thuộc kỹ năng mạnh của người dùng (skill > 1.0).
+2. Nếu người dùng yếu một kỹ năng (skill < 0.8), hãy đưa ra task cụ thể, chi tiết hơn để hỗ trợ.
+
+YÊU CẦU ĐẦU RA:
 1. Đánh giá tình trạng (status).
-2. "Mục tiêu hôm nay" (daily_target): Đưa ra 1 con số doanh số cụ thể cần đạt ngay hôm nay.
-3. 3 hành động cụ thể (actions). Mỗi hành động phải:
-   - Gắn liền với số liệu (vd: viếng thăm 5 shop, bán thêm 2tr SKU A).
-   - Tận dụng thông tin từ NGỮ CẢNH (Khuyến mãi/Chính sách) nếu có.
-   - Không đề xuất năng suất quá 200% hiện tại.
-4. Liệt kê các "references": Tiêu đề của các Memory mà bạn đã sử dụng để đưa ra gợi ý.
+2. "riskAlert": Nếu dự báo < 95% hoặc có xu hướng giảm, hãy đưa ra cảnh báo sớm (ngắn gọn).
+3. "Mục tiêu hôm nay": Con số doanh số cụ thể.
+4. 3 hành động cụ thể. Mỗi hành động phải có:
+   - "task": mô tả chi tiết.
+   - "type": coverage|sales|sku|other.
+   - "priority": high|medium|low.
+   - "impact": Dự kiến đóng góp (vd: +2% doanh số).
+   - "confidence": Điểm tin cậy (0.0 - 1.0).
+   - "confidenceDetails": { "dataQuality": 0-1, "historicalSupport": 0-1, "memoryMatch": 0-1 }.
+5. "references": Các Memory đã dùng.
 
 TRẢ VỀ JSON DUY NHẤT:
 {
   "status": "tốt|nguy hiểm|rất nguy hiểm",
+  "riskAlert": "...",
   "main_issue": "...",
-  "daily_target": "Bán 15.5tr doanh số ngay hôm nay",
+  "daily_target": "...",
   "actions": [
-    { "task": "...", "priority": "high|medium|low" }
+    { 
+      "task": "...", 
+      "type": "...",
+      "priority": "high", 
+      "target": 5, 
+      "impact": "+2%", 
+      "confidence": 0.9,
+      "confidenceDetails": { "dataQuality": 0.9, "historicalSupport": 0.8, "memoryMatch": 0.9 }
+    }
   ],
-  "references": ["Tiêu đề memory 1", "Tiêu đề memory 2"]
+  "references": ["..."]
 }`;
 
   try {
     const response = await ai.models.generateContent({
-      model: 'gemini-2.5-flash',
+      model: state.settings.geminiModel || 'gemini-1.5-flash',
       contents: prompt,
       config: {
         temperature: 0.1,

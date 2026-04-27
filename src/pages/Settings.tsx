@@ -260,22 +260,37 @@ export default function Settings() {
         </div>
       </div>
 
-      {/* Gemini API Key */}
+      {/* Gemini API Key & Model */}
       <div className="bg-slate-900/40 rounded-3xl p-5 shadow-2xl border border-white/5 backdrop-blur-xl space-y-4">
         <div className="flex items-center gap-2 mb-2">
           <Key className="w-5 h-5 text-slate-400" />
-          <h2 className="text-sm font-medium text-white">Gemini API Key</h2>
+          <h2 className="text-sm font-medium text-white">Gemini AI Configuration</h2>
         </div>
-        <p className="text-[10px] text-slate-500 leading-relaxed">
-          Cần thiết để sử dụng tính năng AI Phân tích. API Key sẽ được lưu trữ an toàn ngay trên thiết bị của bạn.
+        <div className="space-y-4">
+          <div className="space-y-2">
+            <label className="text-[10px] text-slate-500 uppercase tracking-widest font-bold ml-1">Gemini API Key</label>
+            <input 
+              type="password" 
+              placeholder="Nhập API Key..." 
+              value={localSettings.geminiKey || ''}
+              onChange={(e) => setLocalSettings({...localSettings, geminiKey: e.target.value})}
+              className="w-full bg-slate-950/50 border border-white/10 rounded-xl px-4 py-3 text-sm text-white focus:outline-none focus:ring-2 focus:ring-slate-500"
+            />
+          </div>
+          <div className="space-y-2">
+            <label className="text-[10px] text-slate-500 uppercase tracking-widest font-bold ml-1">Model Name (e.g., gemini-1.5-flash)</label>
+            <input 
+              type="text" 
+              placeholder="Ví dụ: gemini-1.5-flash" 
+              value={localSettings.geminiModel || 'gemini-1.5-flash'}
+              onChange={(e) => setLocalSettings({...localSettings, geminiModel: e.target.value})}
+              className="w-full bg-slate-950/50 border border-white/10 rounded-xl px-4 py-3 text-sm text-white focus:outline-none focus:ring-2 focus:ring-slate-500"
+            />
+          </div>
+        </div>
+        <p className="text-[10px] text-slate-500 leading-relaxed pt-2 border-t border-white/5">
+          API Key và cấu hình Model sẽ được lưu trữ an toàn ngay trên thiết bị của bạn. Bạn có thể thay đổi Model khi Google ra mắt phiên bản mới (vd: gemini-2.0-flash).
         </p>
-        <input 
-          type="password" 
-          placeholder="Nhập API Key..." 
-          value={localSettings.geminiKey || ''}
-          onChange={(e) => setLocalSettings({...localSettings, geminiKey: e.target.value})}
-          className="w-full bg-slate-950/50 border border-white/10 rounded-xl px-4 py-3 text-sm text-white focus:outline-none focus:ring-2 focus:ring-slate-500"
-        />
       </div>
 
       {/* App Theme */}

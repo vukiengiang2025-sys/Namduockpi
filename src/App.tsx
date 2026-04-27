@@ -3,15 +3,15 @@ import Dashboard from './pages/Dashboard';
 import DataEntry from './pages/DataEntry';
 import YearlyData from './pages/YearlyData';
 import Notes from './pages/Notes';
-import Analyzer from './pages/Analyzer';
+import Weekly from './pages/Weekly';
 import Settings from './pages/Settings';
-import { LayoutDashboard, FileSpreadsheet, CalendarDays, ClipboardList, Sparkles, Settings as SettingsIcon } from 'lucide-react';
+import { LayoutDashboard, FileSpreadsheet, CalendarDays, ClipboardList, BarChart3, Settings as SettingsIcon } from 'lucide-react';
 import { cn } from './lib/utils';
 import { AnimatePresence } from 'motion/react';
 import { useAppStore } from './store';
 
 export default function App() {
-  const [activeTab, setActiveTab] = useState<'dashboard' | 'data' | 'yearly' | 'notes' | 'analyzer' | 'settings'>('dashboard');
+  const [activeTab, setActiveTab] = useState<'dashboard' | 'data' | 'yearly' | 'notes' | 'weekly' | 'settings'>('dashboard');
   const { settings } = useAppStore();
 
   useEffect(() => {
@@ -61,7 +61,7 @@ export default function App() {
           {activeTab === 'data' && <DataEntry key="data" />}
           {activeTab === 'yearly' && <YearlyData key="yearly" />}
           {activeTab === 'notes' && <Notes key="notes" />}
-          {activeTab === 'analyzer' && <Analyzer key="analyzer" />}
+          {activeTab === 'weekly' && <Weekly key="weekly" />}
           {activeTab === 'settings' && <Settings key="settings" />}
         </AnimatePresence>
       </main>
@@ -119,15 +119,15 @@ export default function App() {
           </button>
 
           <button
-            onClick={() => setActiveTab('analyzer')}
+            onClick={() => setActiveTab('weekly')}
             className={cn(
               "flex flex-col items-center justify-center min-w-[64px] h-full gap-1 transition-colors relative shrink-0",
-              activeTab === 'analyzer' ? theme.text : "text-slate-500 hover:text-slate-300"
+              activeTab === 'weekly' ? theme.text : "text-slate-500 hover:text-slate-300"
             )}
           >
-            {activeTab === 'analyzer' && <div className={`absolute top-0 w-8 h-1.5 ${theme.activeBg} rounded-b-full`}></div>}
-            <Sparkles className="w-5 h-5" />
-            <span className="text-[10px] font-medium uppercase tracking-widest hidden sm:block">AI PTích</span>
+            {activeTab === 'weekly' && <div className={`absolute top-0 w-8 h-1.5 ${theme.activeBg} rounded-b-full`}></div>}
+            <BarChart3 className="w-5 h-5" />
+            <span className="text-[10px] font-medium uppercase tracking-widest hidden sm:block">Tuần</span>
           </button>
 
           <button

@@ -35,7 +35,7 @@ Trả về ĐÚNG MỘT JSON OBJECT theo định dạng:
 
   try {
     const response = await ai.models.generateContent({
-      model: 'gemini-2.5-flash',
+      model: settings.geminiModel || 'gemini-1.5-flash',
       contents: prompt,
       config: {
         temperature: 0.1,
