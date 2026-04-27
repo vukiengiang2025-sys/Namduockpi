@@ -10,27 +10,27 @@ export async function summarizeAsMemory(text: string): Promise<Omit<Memory, 'id'
   }
 
   const ai = new GoogleGenAI({ apiKey });
+  const customPrompt = settings.customPrompts?.memorySummary || 'Bạn là một hệ thống phân tích và quản lý tri thức cho người quản lý bán hàng. Nhiệm vụ của bạn là đọc đoạn văn bản/văn kiện và tóm tắt thành các điểm cốt lõi.';
 
-  const prompt = `Bạn là một hệ thống phân tích và quản lý tri thức cho người quản lý bán hàng.
-Nhiệm vụ của bạn là đọc đoạn văn bản/văn kiện dưới đây và tóm tắt nó thành các điểm cốt lõi để lưu vào "Memory" (Trí nhớ dài hạn).
+  const prompt = `${customPrompt}
 
-Văn bản:
+Văn bản cần xử lý:
 """
 ${text}
 """
 
-Yêu cầu:
-- Tìm một tiêu đề ngắn gọn phản ánh đúng nhất.
-- Viết một tóm tắt tổng quan từ 1 đến 2 câu.
-- Trích xuất 3-5 điểm mấu chốt quan trọng nhất.
-- Gắn thẻ (tags). Các thẻ nên ngắn gọn, tiếng anh hoặc tiếng việt không dấu (vd: khuyen-mai, policy, kpi-rules, quy-dinh, doi-thu, mat-hang...).
+Yêu cầu định dạng đầu ra (JSON):
+- title: Tiêu đề ngắn gọn.
+- summary: Tóm tắt 1-2 câu quan trọng nhất.
+- keyPoints: Danh sách 3-5 điểm mấu chốt, con số, điều kiện.
+- tags: Gắn thẻ liên quan (vd: promotion, policy, kpi).
 
 Trả về ĐÚNG MỘT JSON OBJECT theo định dạng:
 {
-  "title": "Tiêu đề ngắn",
-  "summary": "Tóm tắt 1-2 câu",
-  "keyPoints": ["Điểm 1", "Điểm 2", "Điểm 3"],
-  "tags": ["tag1", "tag2"]
+  "title": "...",
+  "summary": "...",
+  "keyPoints": ["...", "..."],
+  "tags": ["...", "..."]
 }`;
 
   try {
@@ -78,7 +78,9 @@ export async function consolidateMemories(memories: Memory[]): Promise<Omit<Memo
   const ai = new GoogleGenAI({ apiKey });
   const allContent = memories.map(m => `--- ${m.title} ---\n${m.summary}\n${m.keyPoints.join(', ')}`).join('\n\n');
   
-  const prompt = `Bạn là chuyên gia tối ưu hóa dữ liệu. Tôi có nhiều bản tóm tắt ký ức (memories) khác nhau về chính sách, sản phẩm và chiến lược kinh doanh.
+  const customPrompt = settings.customPrompts?.memoryConsolidation || 'Bạn là chuyên gia tối ưu hóa dữ liệu. Hãy tổng hợp các bản ghi nhớ.';
+
+  const prompt = `${customPrompt}
   Nhiệm vụ: Hãy tổng hợp TẤT CẢ các nội dung dưới đây thành một bản "SIÊU TÓM TẮT" duy nhất. 
   Bản này phải giữ lại toàn bộ các quy tắc, con số kpi, chiết khấu và chiến lược cốt lõi nhưng bỏ đi những từ ngữ rườm rà.
   Mục tiêu: Tạo ra một "Bộ não chiến lược" nhỏ gọn nhưng đầy đủ để AI khác có thể đọc nhanh và tư vấn chính xác.
