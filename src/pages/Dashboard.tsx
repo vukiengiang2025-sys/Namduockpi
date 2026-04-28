@@ -16,94 +16,9 @@ import { getAIInsight } from '../services/aiService';
 import DataEntry from './DataEntry';
 import Notes from './Notes';
 
-// --- UI COMPONENTS ---
-
-function ProgressCircle({ percent, size = 60, strokeWidth = 6, color = "blue", status = "stable", children }: any) {
-  const radius = (size - strokeWidth) / 2;
-  const circumference = radius * 2 * Math.PI;
-  const offset = circumference - (Math.min(100, Math.max(0, percent)) / 100) * circumference;
-
-  const colorMap: any = {
-    blue: "stroke-blue-500",
-    green: "stroke-emerald-500",
-    yellow: "stroke-yellow-500",
-    red: "stroke-red-500",
-    purple: "stroke-purple-500"
-  };
-
-  return (
-    <div className="relative flex items-center justify-center shrink-0" style={{ width: size, height: size }}>
-      <motion.div 
-        animate={status === 'danger' ? { scale: [1, 1.05, 1], opacity: [0.3, 0.6, 0.3] } : {}}
-        transition={{ duration: 2, repeat: Infinity }}
-        className={cn("absolute inset-0 rounded-full blur-xl", status === 'danger' ? "bg-red-500" : " hidden")}
-      />
-      <svg width={size} height={size} className="-rotate-90 relative z-10">
-        <circle
-          cx={size / 2}
-          cy={size / 2}
-          r={radius}
-          stroke="currentColor"
-          strokeWidth={strokeWidth}
-          fill="transparent"
-          className="text-white/5"
-        />
-        <motion.circle
-          cx={size / 2}
-          cy={size / 2}
-          r={radius}
-          stroke="currentColor"
-          strokeWidth={strokeWidth}
-          fill="transparent"
-          strokeDasharray={circumference}
-          initial={{ strokeDashoffset: circumference }}
-          animate={{ strokeDashoffset: offset }}
-          className={cn("transition-all duration-1000 ease-out", colorMap[color])}
-        />
-      </svg>
-      <div className="absolute inset-0 flex items-center justify-center z-10">
-        {children || <span className="text-[10px] font-black text-white">{Math.round(percent)}%</span>}
-      </div>
-    </div>
-  );
-}
-
-function CommandMetric({ title, value, percent, status, icon: Icon, onClick }: any) {
-  const statusColor = status === 'danger' ? 'red' : status === 'warning' ? 'yellow' : 'green';
-  const HeatIcon = status === 'danger' ? Zap : status === 'warning' ? Activity : CheckCircle2;
-  
-  return (
-    <div 
-      onClick={onClick}
-      className={cn(
-        "relative p-5 rounded-[2rem] bg-slate-900/40 border border-white/5 backdrop-blur-xl group transition-all h-full flex flex-col justify-between",
-        onClick ? "cursor-pointer hover:bg-slate-950 hover:border-white/10 active:scale-95 shadow-lg shadow-black/40" : ""
-      )}
-    >
-      <div className="flex items-center justify-between mb-4">
-        <div className={cn(
-          "p-2.5 rounded-2xl",
-          status === 'danger' ? "bg-red-500/10 text-red-400" : status === 'warning' ? "bg-yellow-500/10 text-yellow-400" : "bg-emerald-500/10 text-emerald-400"
-        )}>
-          <HeatIcon className={cn("w-5 h-5", status === 'danger' && "animate-pulse")} />
-        </div>
-        <ProgressCircle percent={percent} size={44} strokeWidth={4} color={statusColor} status={status} />
-      </div>
-      <div>
-        <p className="text-[9px] text-slate-500 uppercase font-black tracking-widest mb-1">{title}</p>
-        <div className="flex items-baseline gap-1.5 flex-wrap">
-           <h4 className="text-xl font-black text-white leading-none truncate max-w-full">{value}</h4>
-           <span className={cn(
-             "text-[8px] font-black px-1 py-0.5 rounded uppercase tracking-tighter shrink-0",
-             status === 'danger' ? "bg-red-500/10 text-red-500" : status === 'warning' ? "bg-yellow-500/10 text-yellow-500" : "bg-emerald-500/10 text-emerald-500"
-           )}>
-             {status === 'danger' ? 'High Heat' : status === 'warning' ? 'Rising' : 'Stable'}
-           </span>
-        </div>
-      </div>
-    </div>
-  );
-}
+import { ProgressCircle } from '../components/ProgressCircle';
+import { CommandMetric } from '../components/CommandMetric';
+import { ActionCard } from '../components/ActionCard';
 
 
 export default function Dashboard() {
@@ -343,60 +258,12 @@ export default function Dashboard() {
            {dailyTasks.length > 0 ? (
               <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
                  {dailyTasks.map((task, idx) => (
-                    <motion.div 
-                      initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: idx * 0.1 }}
-                      key={task.id} 
-                      className={cn(
-                        "group relative flex flex-col p-6 rounded-[2rem] border transition-all h-full",
-                        task.isCompleted ? "bg-emerald-500/5 border-emerald-500/20 opacity-60" : "bg-slate-950/60 border-white/5 hover:border-blue-500/30 hover:bg-slate-950"
-                      )}
-                    >
-                       <div className="flex items-center justify-between mb-4">
-                          <div className="flex items-center gap-2">
-                             <span className={cn(
-                               "text-[7px] font-black uppercase px-2 py-0.5 rounded-full tracking-tighter", 
-                               task.priority === 'high' ? "bg-red-500 text-white" : "bg-slate-800 text-slate-400"
-                             )}>
-                               Priority: {task.priority}
-                             </span>
-                             <span className="text-[7px] font-black text-blue-400/60 uppercase tracking-tighter">@{task.type}</span>
-                          </div>
-                          <div className="text-[9px] font-black text-emerald-500 bg-emerald-500/10 px-2 py-0.5 rounded-full">
-                             {task.expectedImpact}
-                          </div>
-                       </div>
-                       
-                       <div className="flex-1 mb-6">
-                          <p className={cn(
-                            "text-sm font-bold leading-relaxed", 
-                            task.isCompleted ? "text-slate-600 line-through" : "text-white group-hover:text-blue-200"
-                          )}>
-                            {task.text}
-                          </p>
-                       </div>
-
-                       <div className="flex items-center gap-3 mt-auto">
-                          <button 
-                            onClick={() => toggleDailyTask(task.id)}
-                            className={cn(
-                              "flex-1 h-10 rounded-2xl font-black text-[9px] uppercase tracking-widest transition-all overflow-hidden flex items-center justify-center gap-2",
-                              task.isCompleted ? "bg-emerald-500 text-white" : "bg-blue-600 text-white hover:bg-blue-500 active:scale-95 shadow-lg shadow-blue-600/20"
-                            )}
-                          >
-                             {task.isCompleted ? (
-                               <>
-                                 <CheckCircle2 className="w-3.5 h-3.5" />
-                                 <span>Đã xong</span>
-                               </>
-                             ) : (
-                               <>
-                                 <PlusCircle className="w-3.5 h-3.5" />
-                                 <span>Bắt đầu ngay</span>
-                               </>
-                             )}
-                          </button>
-                       </div>
-                    </motion.div>
+                    <ActionCard 
+                      key={task.id}
+                      task={task}
+                      index={idx}
+                      onToggle={toggleDailyTask}
+                    />
                  ))}
               </div>
            ) : (
