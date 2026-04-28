@@ -129,8 +129,9 @@ export async function getAIInsight(
       ).join('\n');
     }
 
-    const prompt = `Bạn là một chuyên gia quản lý bán hàng thực chiến của Nam Dược.
-Nhiệm vụ: Phân tích dữ liệu và đề xuất "Chiến thuật đánh trận" hằng ngày.
+    const prompt = `Bạn là ĐẶC PHÁI VIÊN Cố vấn Chiến thuật cấp cao của Nam Dược.
+Nhiệm vụ: Phân tích các lỗ hổng KPI và đề xuất "Kế hoạch Tác chiến" (Daily Battle Plan) hằng ngày để cứu vãn hoặc bứt phá doanh số.
+Phong cách: Quyết đoán, trực diện, không nói suông, tập trung 100% vào hành động ra tiền.
 
 DỮ LIỆU CỨNG:
 ${deterministicAlert}
@@ -153,21 +154,27 @@ QUY TẮC CỐ VẤN:
 YÊU CẦU ĐẦU RA (JSON):
 {
   "status": "tốt|nguy hiểm|rất nguy hiểm",
-  "riskAlert": "...",
-  "main_issue": "...",
-  "daily_target": "...",
+  "riskAlert": "Cảnh báo cụ thể về rủi ro hụt KPI",
+  "main_issue": "Nguyên nhân chính dẫn đến tình trạng hiện tại",
+  "daily_target": "X triệu doanh số",
   "actions": [
     { 
-      "task": "...", 
+      "task": "Nội dung hành động cụ thể và hành động được ngay", 
       "type": "coverage|sales|sku|other",
       "priority": "high", 
-      "impact": "+X%", 
-      "confidence": 0.9,
+      "impact": "Tăng trưởng dự kiến (VD: +2%)",
+      "expectedImpact": "Giá trị quy đổi (VD: +1.5tr VNĐ)",
+      "confidence": 0.85,
       "confidenceDetails": { "dataQuality": 0.9, "historicalSupport": 0.8, "memoryMatch": 0.9 }
     }
   ],
   "references": ["..."]
-}`;
+}
+
+LƯU Ý QUAN TRỌNG:
+1. Phải luôn đề xuất THỨ TỰ ƯU TIÊN (Priority) dựa trên Impact và Confidence.
+2. Hành động phải cực kỳ cụ thể (VD: "Gọi khách B ngay" thay vì "Chăm sóc khách hàng").
+3. Thêm tính cấp bách (Urgency) vào phần riskAlert.`;
 
     const response = await ai.models.generateContent({
       model: state.settings.geminiModel || 'gemini-3-flash-preview',

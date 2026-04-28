@@ -87,6 +87,7 @@ export interface DailyTask {
   confidence?: number;
   createdAt: number;
   kpiAtStart?: number;
+  type?: 'coverage' | 'sales' | 'sku' | 'other';
 }
 
 export interface WeeklyReport {
@@ -118,6 +119,7 @@ export interface AIAction {
   priority: 'high' | 'medium' | 'low';
   target?: number;
   impact?: string;
+  expectedImpact?: string;
   confidence: number;
   confidenceDetails?: {
     dataQuality: number;
