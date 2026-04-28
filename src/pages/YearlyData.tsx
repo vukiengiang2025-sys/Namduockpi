@@ -71,7 +71,7 @@ export default function YearlyData() {
         <h1 className="text-2xl font-light text-white tracking-tight">Doanh Số <span className="font-bold">Năm</span></h1>
       </div>
 
-      <div className="px-3 sm:px-5 space-y-8 max-w-lg mx-auto">
+      <div className="px-3 sm:px-5 space-y-8 max-w-5xl mx-auto">
         {/* Charts Section */}
         <div className="bg-slate-900/40 rounded-[2rem] p-4 shadow-2xl border border-white/5 backdrop-blur-xl w-full">
           <h3 className="text-sm font-bold flex items-center gap-2 text-white uppercase tracking-widest mb-6">

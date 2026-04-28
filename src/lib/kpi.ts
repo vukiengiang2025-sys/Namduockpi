@@ -76,15 +76,36 @@ export function calc15DaysSalesKPI(actual15: number, target: number): number {
 }
 
 export function calcSKUKPI(skuVal: number): number {
-  if (!skuVal) return 0;
-  const weights = getWeights();
-  const rules = getRules();
+  if (!skuVal || skuVal <= 0) return 0;
   
-  for (const step of rules.skuTable) {
-    if (skuVal >= step.min) {
-      return Number((weights.sku * step.scoreMult).toFixed(2));
+  const settings = useAppStore.getState().settings;
+  const tiers = settings.skuTiers || [
+    { threshold: 3.3, score: 4.0 },
+    { threshold: 3.5, score: 4.5 },
+    { threshold: 3.7, score: 5.0 },
+    { threshold: 3.9, score: 5.5 },
+    { threshold: 4.1, score: 6.0 },
+    { threshold: 4.3, score: 6.5 },
+    { threshold: 4.5, score: 7.0 },
+    { threshold: 4.7, score: 7.5 }
+  ];
+
+  // Additional rule: SKU below 3.3 is 0
+  const minThreshold = Math.min(...tiers.map(t => t.threshold));
+  if (skuVal < minThreshold) return 0;
+
+  // Logic: Find the highest threshold that is <= skuVal
+  let finalScore = 0;
+  
+  // Sort tiers by threshold descending to find the first match
+  const sortedTiers = [...tiers].sort((a, b) => b.threshold - a.threshold);
+  
+  for (const tier of sortedTiers) {
+    if (skuVal >= tier.threshold) {
+      finalScore = tier.score;
+      break;
     }
   }
   
-  return 0;
+  return Number(finalScore.toFixed(2));
 }

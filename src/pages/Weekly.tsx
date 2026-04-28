@@ -44,7 +44,7 @@ export default function WeeklyDigest() {
         <h1 className="text-2xl font-light text-white tracking-tight">Weekly <span className="font-bold text-purple-400">Digest</span></h1>
       </div>
 
-      <div className="px-5 max-w-lg mx-auto space-y-6">
+      <div className="px-5 max-w-5xl mx-auto space-y-6">
         {/* Action Button */}
         <button 
           onClick={handleGenerate}

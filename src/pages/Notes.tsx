@@ -1,4 +1,4 @@
-import { useState, useEffect, useRef } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 import { motion, AnimatePresence } from 'motion/react';
 import { useAppStore } from '../store';
 import { Plus, Trash2, CheckCircle, Circle, Bell, BrainCircuit, Sparkles, Loader2, ChevronDown, ChevronUp, FileUp, FileText, X } from 'lucide-react';

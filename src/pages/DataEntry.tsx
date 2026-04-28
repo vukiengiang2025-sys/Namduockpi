@@ -80,7 +80,7 @@ function TableRow({ label, targetValue, onTargetChange, actualValue, onActualCha
 }
 
 export default function DataEntry() {
-  const { months, quarters, halfYears, updateMonth, updateQuarter, updateHalfYear, selectedMonthIndex, setSelectedMonthIndex } = useAppStore();
+  const { months, quarters, halfYears, updateMonth, updateQuarter, updateHalfYear, selectedMonthIndex, setSelectedMonthIndex, settings } = useAppStore();
 
   const currentMonthIndex = selectedMonthIndex;
   const currentQuarterIndex = Math.floor(currentMonthIndex / 3);
@@ -121,7 +121,7 @@ export default function DataEntry() {
   const monthSalesRatio = formatPercent(month.salesActual, month.salesTarget);
   const monthCoverageRatio = formatPercent(month.coverageActual, month.coverageTarget);
   const monthSalesKPI = calcSalesKPI(month.salesActual, month.salesTarget);
-  const monthCoverageKPI = calcCoverageKPI(month.coverageActual, month.coverageTarget, 0.5);
+  const monthCoverageKPI = calcCoverageKPI(month.coverageActual, month.coverageTarget);
   const month15DaysKPI = calc15DaysSalesKPI(month.sales15DaysActual, month.salesTarget);
   const month15DaysRatio = formatPercent(month.sales15DaysActual, month.salesTarget);
   const monthSKUKPI = calcSKUKPI(month.skuActual);
@@ -177,14 +177,14 @@ export default function DataEntry() {
             point={monthSalesKPI.toFixed(1)}
           />
           <TableRow 
-            label="Độ phủ (5đ)" 
+            label={`Độ phủ (${settings.kpiWeights?.coverage || 10}đ)`} 
             targetValue={month.coverageTarget} onTargetChange={handleNumChange(updateMonth, currentMonthIndex, 'coverageTarget')}
             actualValue={month.coverageActual} onActualChange={handleNumChange(updateMonth, currentMonthIndex, 'coverageActual')}
             ratio={monthCoverageRatio}
             point={monthCoverageKPI.toFixed(1)}
           />
           <tr className="group hover:bg-white/[0.02] transition-colors">
-            <td className="py-3 pr-2 font-medium text-[11px] leading-tight text-white">15 Ngày (5đ)</td>
+            <td className="py-3 pr-2 font-medium text-[11px] leading-tight text-white">15 Ngày ({settings.kpiWeights?.month15Days || 5}đ)</td>
             <td className="py-3 pr-2" colSpan={1}>
               <span className="text-[9px] text-slate-500 font-mono">Dựa vào TDS khoán</span>
             </td>
@@ -203,8 +203,8 @@ export default function DataEntry() {
             </td>
           </tr>
           <tr className="group hover:bg-white/[0.02] transition-colors">
-            <td className="py-3 pr-2 font-medium text-[11px] leading-tight text-white">SKU (7.5đ)</td>
-            <td className="py-3 pr-2 text-slate-500 text-[10px] font-mono" colSpan={1}>Điểm 3.1-5.0</td>
+            <td className="py-3 pr-2 font-medium text-[11px] leading-tight text-white">SKU ({settings.kpiWeights?.sku || 7.5}đ)</td>
+            <td className="py-3 pr-2 text-slate-500 text-[10px] font-mono" colSpan={1}>Tính theo bậc điểm</td>
             <td className="py-3 pr-2">
               <input 
                 type="number" value={month.skuActual || ''} onChange={handleNumChange(updateMonth, currentMonthIndex, 'skuActual')}

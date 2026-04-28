@@ -49,7 +49,17 @@ export default function Settings() {
         { min: 3.1, scoreMult: 0.466 },
       ]
     },
-    appIcon: settings.appIcon || 'hexagon'
+    appIcon: settings.appIcon || 'hexagon',
+    skuTiers: settings.skuTiers || [
+      { threshold: 3.3, score: 4.0 },
+      { threshold: 3.5, score: 4.5 },
+      { threshold: 3.7, score: 5.0 },
+      { threshold: 3.9, score: 5.5 },
+      { threshold: 4.1, score: 6.0 },
+      { threshold: 4.3, score: 6.5 },
+      { threshold: 4.5, score: 7.0 },
+      { threshold: 4.7, score: 7.5 }
+    ]
   });
 
   const handleSave = () => {
@@ -62,13 +72,14 @@ export default function Settings() {
       initial={{ opacity: 0, x: 20 }}
       animate={{ opacity: 1, x: 0 }}
       exit={{ opacity: 0, x: -20 }}
-      className="space-y-6 px-5 pt-8 pb-4"
+      className="space-y-6 pb-20"
     >
-      <div className="flex items-center gap-2 mb-4">
-        <span className="w-2 h-2 bg-slate-500 rounded-full"></span>
-        <span className="text-[10px] text-slate-400 uppercase tracking-widest font-medium">Hệ thống</span>
-      </div>
-      <h1 className="text-2xl font-light text-white tracking-tight mb-8">Cài đặt <span className="font-bold">Ứng dụng</span></h1>
+      <div className="max-w-5xl mx-auto px-5 pt-8 space-y-8">
+        <div className="flex items-center gap-2 mb-4">
+          <span className="w-2 h-2 bg-slate-500 rounded-full"></span>
+          <span className="text-[10px] text-slate-400 uppercase tracking-widest font-medium">Hệ thống</span>
+        </div>
+        <h1 className="text-2xl font-light text-white tracking-tight mb-8">Cài đặt <span className="font-bold">Ứng dụng</span></h1>
 
       {/* Theme Mode */}
       <div className="bg-slate-900/40 rounded-3xl p-5 shadow-2xl border border-white/5 backdrop-blur-xl space-y-4">
@@ -394,6 +405,49 @@ export default function Settings() {
         </div>
       </div>
 
+      {/* SKU Tiers Configuration */}
+      <div className="bg-slate-900/40 rounded-3xl p-5 shadow-2xl border border-white/5 backdrop-blur-xl space-y-4">
+        <div className="flex items-center gap-2 mb-2">
+          <SettingsIcon className="w-5 h-5 text-blue-400" />
+          <h2 className="text-sm font-medium text-white">Cấu hình Bậc Điểm SKU</h2>
+        </div>
+        
+        <div className="grid grid-cols-2 gap-3">
+          {(localSettings.skuTiers || []).map((tier, idx) => (
+            <div key={idx} className="flex flex-col gap-1 bg-slate-950/30 p-3 rounded-xl border border-white/5">
+              <span className="text-[9px] text-slate-500 font-bold">BẬC {idx + 1}</span>
+              <div className="flex items-center gap-2">
+                <input 
+                  type="number"
+                  step="0.1"
+                  value={tier.threshold}
+                  onChange={(e) => {
+                    const newTiers = [...(localSettings.skuTiers || [])];
+                    newTiers[idx].threshold = parseFloat(e.target.value);
+                    setLocalSettings({...localSettings, skuTiers: newTiers});
+                  }}
+                  className="w-16 bg-transparent border-b border-white/10 text-xs text-white focus:border-blue-500 py-1 outline-none font-mono"
+                  placeholder="Mốc"
+                />
+                <span className="text-[10px] text-slate-400">→</span>
+                <input 
+                  type="number"
+                  step="0.5"
+                  value={tier.score}
+                  onChange={(e) => {
+                    const newTiers = [...(localSettings.skuTiers || [])];
+                    newTiers[idx].score = parseFloat(e.target.value);
+                    setLocalSettings({...localSettings, skuTiers: newTiers});
+                  }}
+                  className="w-16 bg-transparent border-b border-white/10 text-xs text-blue-400 focus:border-blue-500 py-1 outline-none font-mono font-bold"
+                  placeholder="Điểm"
+                />
+              </div>
+            </div>
+          ))}
+        </div>
+      </div>
+
       <button 
         onClick={handleSave}
         className="w-full bg-white hover:bg-slate-200 text-slate-900 py-4 rounded-2xl transition-colors font-semibold flex items-center justify-center gap-2 mt-8"
@@ -402,6 +456,7 @@ export default function Settings() {
         Lưu thay đổi
       </button>
 
+      </div>
     </motion.div>
   );
 }

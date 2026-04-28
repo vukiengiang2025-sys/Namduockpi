@@ -171,6 +171,7 @@ export interface AppSettings {
     memoryConsolidation?: string;
     kpiAnalysis?: string;
   };
+  skuTiers?: { threshold: number; score: number }[];
 }
 
 interface AppState {
@@ -242,7 +243,17 @@ export const useAppStore = create<AppState>()(
           memorySummary: 'Bạn là trợ lý dữ liệu. Hãy đọc nội dung sau và tóm tắt thành các ý chính quan trọng về chính sách, sản phẩm hoặc chỉ tiêu KPI. Giữ lại các con số quan trọng.',
           memoryConsolidation: 'Bạn là chuyên gia tối ưu hóa dữ liệu. Hãy tổng hợp nhiều bản ghi nhớ thành một bản "SIÊU TÓM TẮT" duy nhất súc tích, giữ lại toàn bộ con số kpi, chiết khấu và chiến lược cốt lõi.',
           kpiAnalysis: 'Bạn là chuyên gia tư vấn chiến lược dựa trên dữ liệu KPI và ghi nhớ hệ thống.'
-        }
+        },
+        skuTiers: [
+          { threshold: 3.3, score: 4.0 },
+          { threshold: 3.5, score: 4.5 },
+          { threshold: 3.7, score: 5.0 },
+          { threshold: 3.9, score: 5.5 },
+          { threshold: 4.1, score: 6.0 },
+          { threshold: 4.3, score: 6.5 },
+          { threshold: 4.5, score: 7.0 },
+          { threshold: 4.7, score: 7.5 }
+        ]
       },
       months: Array(12).fill(0).map(() => ({
         salesTarget: 0,
