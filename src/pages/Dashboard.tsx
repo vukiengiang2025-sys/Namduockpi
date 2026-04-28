@@ -343,7 +343,7 @@ export default function Dashboard() {
           <span className="font-mono text-white bg-slate-800/80 px-2 py-0.5 rounded text-xs border border-white/5">{monthCoverageKPI.toFixed(1)}</span>
         </li>
         <li className="flex justify-between items-center text-sm">
-          <span className="text-slate-400 text-xs">Tiến độ 15 ngày ({settings.kpiWeights?.month15Days || 5.5}đ)</span>
+          <span className="text-slate-400 text-xs">Tiến độ 15 ngày ({settings.kpiWeights?.month15Days || 5}đ)</span>
           <span className="font-mono text-white bg-slate-800/80 px-2 py-0.5 rounded text-xs border border-white/5">{month15DaysKPI.toFixed(1)}</span>
         </li>
         <li className="flex justify-between items-center text-sm">

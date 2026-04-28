@@ -2,7 +2,7 @@ import { useAppStore } from '../store';
 
 function getWeights() {
   const settings = useAppStore.getState().settings;
-  return settings.kpiWeights || { sales: 80, coverage: 10, month15Days: 5.5, sku: 7.5 };
+  return settings.kpiWeights || { sales: 80, coverage: 10, month15Days: 5, sku: 7.5 };
 }
 
 function getRules() {
@@ -60,16 +60,19 @@ export function calcCoverageKPI(actual: number, target: number, multiplier: numb
 
 export function calc15DaysSalesKPI(actual15: number, target: number): number {
   if (!target || target <= 0) return 0;
-  const weights = getWeights();
-  const rules = getRules();
-  const baseWeight = weights.month15Days !== undefined ? weights.month15Days : 5.5; 
   
-  const p = ((actual15 / target) / rules.month15DaysTargetRatio) * baseWeight;
-  if (p < (baseWeight * rules.month15DaysThreshold)) return 0; 
+  const ratio = actual15 / target;
   
-  const max = baseWeight * rules.month15DaysMaxMultiplier;
-  if (p > max) return max; 
-  return Number(p.toFixed(2));
+  // Rule: If % progress < 44%, score is 0
+  if (ratio < 0.44) return 0;
+  
+  // Rule: (progress / 55%) * 5
+  let score = (ratio / 0.55) * 5;
+  
+  // Rule: Max is 7.5 points
+  if (score > 7.5) score = 7.5;
+  
+  return Number(score.toFixed(2));
 }
 
 export function calcSKUKPI(skuVal: number): number {
