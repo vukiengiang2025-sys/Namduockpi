@@ -173,7 +173,7 @@ export default function Dashboard() {
               <AppIconNode className="w-6 h-6 text-blue-500" />
             </div>
             <div>
-              <span className="text-[10px] text-slate-500 uppercase tracking-widest font-black block mb-0.5">KPI Insight Dashboard</span>
+              <span className="text-[10px] text-slate-500 uppercase tracking-widest font-black block mb-0.5">NAMDUOC KPI</span>
               <h1 className="text-2xl font-light text-white tracking-tight leading-none">Tháng <span className="font-bold">{currentMonthIndex + 1}</span></h1>
             </div>
           </div>

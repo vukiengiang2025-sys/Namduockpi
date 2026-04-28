@@ -238,7 +238,7 @@ export const useAppStore = create<AppState>()(
         geminiKey: '',
         geminiModel: 'gemini-3-flash-preview',
         themeColor: 'blue',
-        appTitle: 'Hệ thống báo cáo KPI',
+        appTitle: 'NAMDUOC KPI',
         customPrompts: {
           memorySummary: 'Bạn là trợ lý dữ liệu. Hãy đọc nội dung sau và tóm tắt thành các ý chính quan trọng về chính sách, sản phẩm hoặc chỉ tiêu KPI. Giữ lại các con số quan trọng.',
           memoryConsolidation: 'Bạn là chuyên gia tối ưu hóa dữ liệu. Hãy tổng hợp nhiều bản ghi nhớ thành một bản "SIÊU TÓM TẮT" duy nhất súc tích, giữ lại toàn bộ con số kpi, chiết khấu và chiến lược cốt lõi.',
