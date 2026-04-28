@@ -41,6 +41,7 @@ export interface Memory {
   keyPoints: string[];
   tags: string[];
   createdAt: number;
+  embedding?: number[]; // Lưu trữ vector đặc trưng ngữ nghĩa
 }
 
 export interface TaskLog {

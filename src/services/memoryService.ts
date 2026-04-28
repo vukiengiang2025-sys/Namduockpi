@@ -1,5 +1,6 @@
 import { GoogleGenAI } from '@google/genai';
 import { useAppStore, Memory } from '../store';
+import { getEmbedding } from './aiService';
 
 export async function summarizeAsMemory(text: string): Promise<Omit<Memory, 'id' | 'createdAt'>> {
   const { settings } = useAppStore.getState();
@@ -8,6 +9,9 @@ export async function summarizeAsMemory(text: string): Promise<Omit<Memory, 'id'
   if (!apiKey) {
     throw new Error('Chưa cấu hình Gemini API Key trong phần Cài đặt.');
   }
+
+  // 1. Tạo Embedding song song với việc tóm tắt để tối ưu tốc độ
+  const embeddingPromise = getEmbedding(text);
 
   const ai = new GoogleGenAI({ apiKey });
   const customPrompt = settings.customPrompts?.memorySummary || 'Bạn là một hệ thống phân tích và quản lý tri thức cho người quản lý bán hàng. Nhiệm vụ của bạn là đọc đoạn văn bản/văn kiện và tóm tắt thành các điểm cốt lõi.';
@@ -57,6 +61,13 @@ Trả về ĐÚNG MỘT JSON OBJECT theo định dạng:
     }
 
     const data = JSON.parse(jsonStr) as Omit<Memory, 'id' | 'createdAt'>;
+    
+    // 2. Lấy kết quả Embedding
+    const embedding = await embeddingPromise;
+    if (embedding.length > 0) {
+      (data as any).embedding = embedding;
+    }
+
     return data;
   } catch (err: any) {
     console.error('AI Memory Error:', err);
@@ -77,6 +88,9 @@ export async function consolidateMemories(memories: Memory[]): Promise<Omit<Memo
 
   const ai = new GoogleGenAI({ apiKey });
   const allContent = memories.map(m => `--- ${m.title} ---\n${m.summary}\n${m.keyPoints.join(', ')}`).join('\n\n');
+  
+  // Tạo Embedding song song
+  const embeddingPromise = getEmbedding(allContent);
   
   const customPrompt = settings.customPrompts?.memoryConsolidation || 'Bạn là chuyên gia tối ưu hóa dữ liệu. Hãy tổng hợp các bản ghi nhớ.';
 
@@ -117,7 +131,12 @@ export async function consolidateMemories(memories: Memory[]): Promise<Omit<Memo
       }
     }
 
-    return JSON.parse(jsonStr) as Omit<Memory, 'id' | 'createdAt'>;
+    const data = JSON.parse(jsonStr) as Omit<Memory, 'id' | 'createdAt'>;
+    const embedding = await embeddingPromise;
+    if (embedding.length > 0) {
+      (data as any).embedding = embedding;
+    }
+    return data;
   } catch (error: any) {
     throw new Error('Lỗi tóm tắt gộp: ' + (error.message || 'Unknown error'));
   }
