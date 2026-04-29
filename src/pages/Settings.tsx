@@ -67,22 +67,41 @@ export default function Settings() {
     alert('Đã lưu cài đặt!');
   };
 
+  const containerVariants = {
+    initial: { opacity: 0 },
+    animate: {
+      opacity: 1,
+      transition: {
+        staggerChildren: 0.05,
+        delayChildren: 0.1
+      }
+    }
+  };
+
+  const itemVariants = {
+    initial: { opacity: 0, y: 15 },
+    animate: { opacity: 1, y: 0, transition: { duration: 0.4, ease: [0.22, 1, 0.36, 1] } }
+  };
+
   return (
     <motion.div 
-      initial={{ opacity: 0, x: 20 }}
-      animate={{ opacity: 1, x: 0 }}
-      exit={{ opacity: 0, x: -20 }}
+      variants={containerVariants}
+      initial="initial"
+      animate="animate"
       className="space-y-6 pb-20"
     >
       <div className="max-w-5xl mx-auto px-5 pt-8 space-y-8">
-        <div className="flex items-center gap-2 mb-4">
+        <motion.div variants={itemVariants} className="flex items-center gap-2 mb-4">
           <span className="w-2 h-2 bg-slate-500 rounded-full"></span>
           <span className="text-[10px] text-slate-400 uppercase tracking-widest font-medium">Hệ thống</span>
-        </div>
-        <h1 className="text-2xl font-light text-white tracking-tight mb-8">Cài đặt <span className="font-bold">Ứng dụng</span></h1>
+        </motion.div>
+        
+        <motion.h1 variants={itemVariants} className="text-3xl font-black text-white tracking-tight mb-8 uppercase">
+          Cài đặt <span className="text-blue-500">Hệ thống</span>
+        </motion.h1>
 
       {/* Theme Mode */}
-      <div className="bg-slate-900/40 rounded-3xl p-5 shadow-2xl border border-white/5 backdrop-blur-xl space-y-4">
+      <motion.div variants={itemVariants} className="bg-slate-900/40 rounded-3xl p-5 shadow-2xl border border-white/5 backdrop-blur-xl space-y-4">
         <div className="flex items-center gap-2 mb-2">
           {localSettings.themeMode === 'light' ? <Sun className="w-5 h-5 text-slate-400" /> : <Moon className="w-5 h-5 text-slate-400" />}
           <h2 className="text-sm font-medium text-white">Chế độ giao diện</h2>
@@ -107,10 +126,10 @@ export default function Settings() {
             <span className="text-xs font-medium text-white">Sáng (Light)</span>
           </button>
         </div>
-      </div>
+      </motion.div>
 
       {/* Font Family */}
-      <div className="bg-slate-900/40 rounded-3xl p-5 shadow-2xl border border-white/5 backdrop-blur-xl space-y-4">
+      <motion.div variants={itemVariants} className="bg-slate-900/40 rounded-3xl p-5 shadow-2xl border border-white/5 backdrop-blur-xl space-y-4">
         <div className="flex items-center gap-2 mb-2">
           <TypeIcon className="w-5 h-5 text-slate-400" />
           <h2 className="text-sm font-medium text-white">Font chữ</h2>
@@ -132,10 +151,10 @@ export default function Settings() {
             </button>
           ))}
         </div>
-      </div>
+      </motion.div>
 
       {/* Dashboard Layout */}
-      <div className="bg-slate-900/40 rounded-3xl p-5 shadow-2xl border border-white/5 backdrop-blur-xl space-y-4">
+      <motion.div variants={itemVariants} className="bg-slate-900/40 rounded-3xl p-5 shadow-2xl border border-white/5 backdrop-blur-xl space-y-4">
         <div className="flex items-center gap-2 mb-2">
           <LayoutDashboard className="w-5 h-5 text-slate-400" />
           <h2 className="text-sm font-medium text-white">Bố cục Tổng quan</h2>
@@ -149,10 +168,10 @@ export default function Settings() {
           <option value="details-first">Ưu tiên chi tiết KPI (Biểu đồ trên)</option>
         </select>
         <p className="text-[10px] text-slate-500">Kéo các phần biểu đồ và chi tiết ở màn hình Tổng quan theo cách bạn thích xem nhất.</p>
-      </div>
+      </motion.div>
 
       {/* Custom Header Bg */}
-      <div className="bg-slate-900/40 rounded-3xl p-5 shadow-2xl border border-white/5 backdrop-blur-xl space-y-4">
+      <motion.div variants={itemVariants} className="bg-slate-900/40 rounded-3xl p-5 shadow-2xl border border-white/5 backdrop-blur-xl space-y-4">
         <div className="flex items-center gap-2 mb-2">
           <ImageIcon className="w-5 h-5 text-slate-400" />
           <h2 className="text-sm font-medium text-white">Hình nền tuỳ chỉnh</h2>
@@ -165,10 +184,10 @@ export default function Settings() {
           className="w-full bg-slate-950/50 border border-white/10 rounded-xl px-4 py-3 text-sm text-white focus:outline-none focus:ring-2 focus:ring-slate-500"
         />
         <p className="text-[10px] text-slate-500">Có thể dụng hình ảnh hoặc GIF làm hình nền. Nếu đường dẫn trống, hệ thống sẽ sử dụng hiệu ứng sương mù hiện đại.</p>
-      </div>
+      </motion.div>
 
       {/* Custom KPI Thresholds & Rules */}
-      <div className="bg-slate-900/40 rounded-3xl p-5 shadow-2xl border border-white/5 backdrop-blur-xl space-y-4">
+      <motion.div variants={itemVariants} className="bg-slate-900/40 rounded-3xl p-5 shadow-2xl border border-white/5 backdrop-blur-xl space-y-4">
         <div className="flex items-center justify-between mb-2">
           <div className="flex items-center gap-2">
             <Sliders className="w-5 h-5 text-slate-400" />
@@ -247,10 +266,10 @@ export default function Settings() {
             </div>
           </div>
         </div>
-      </div>
+      </motion.div>
 
       {/* App Title */}
-      <div className="bg-slate-900/40 rounded-3xl p-5 shadow-2xl border border-white/5 backdrop-blur-xl space-y-4">
+      <motion.div variants={itemVariants} className="bg-slate-900/40 rounded-3xl p-5 shadow-2xl border border-white/5 backdrop-blur-xl space-y-4">
         <div className="flex items-center gap-2 mb-2">
           <Type className="w-5 h-5 text-slate-400" />
           <h2 className="text-sm font-medium text-white">Tên Ứng dụng</h2>
@@ -269,10 +288,10 @@ export default function Settings() {
             <li>Để đổi Logo App cài đặt trên màn hình, hãy tải lên ảnh <code>icon.png</code> và <code>splash.png</code> vào thư mục <code>resources</code> trên repo, sau đó chạy lệnh <code>npx capacitor-assets generate</code> nếu bạn kéo code về build offline, hoặc commit trực tiếp để GitHub Actions tự generate.</li>
           </ul>
         </div>
-      </div>
+      </motion.div>
 
       {/* Gemini API Key & Model */}
-      <div className="bg-slate-900/40 rounded-3xl p-5 shadow-2xl border border-white/5 backdrop-blur-xl space-y-4">
+      <motion.div variants={itemVariants} className="bg-slate-900/40 rounded-3xl p-5 shadow-2xl border border-white/5 backdrop-blur-xl space-y-4">
         <div className="flex items-center gap-2 mb-2">
           <Key className="w-5 h-5 text-slate-400" />
           <h2 className="text-sm font-medium text-white">Gemini AI Configuration</h2>
@@ -302,10 +321,10 @@ export default function Settings() {
         <p className="text-[10px] text-slate-500 leading-relaxed pt-2 border-t border-white/5">
           API Key và cấu hình Model sẽ được lưu trữ an toàn ngay trên thiết bị của bạn. Bạn có thể thay đổi Model khi Google ra mắt phiên bản mới (vd: gemini-2.0-flash).
         </p>
-      </div>
+      </motion.div>
 
       {/* App Theme */}
-      <div className="bg-slate-900/40 rounded-3xl p-5 shadow-2xl border border-white/5 backdrop-blur-xl space-y-4">
+      <motion.div variants={itemVariants} className="bg-slate-900/40 rounded-3xl p-5 shadow-2xl border border-white/5 backdrop-blur-xl space-y-4">
         <div className="flex items-center gap-2 mb-2">
           <Palette className="w-5 h-5 text-slate-400" />
           <h2 className="text-sm font-medium text-white">Chủ đề Giao diện</h2>
@@ -326,10 +345,10 @@ export default function Settings() {
             </button>
           ))}
         </div>
-      </div>
+      </motion.div>
 
       {/* App Icon */}
-      <div className="bg-slate-900/40 rounded-3xl p-5 shadow-2xl border border-white/5 backdrop-blur-xl space-y-4">
+      <motion.div variants={itemVariants} className="bg-slate-900/40 rounded-3xl p-5 shadow-2xl border border-white/5 backdrop-blur-xl space-y-4">
         <div className="flex items-center gap-2 mb-2">
           <Shapes className="w-5 h-5 text-slate-400" />
           <h2 className="text-sm font-medium text-white">Biểu tượng Ứng dụng</h2>
@@ -349,10 +368,10 @@ export default function Settings() {
             </button>
           ))}
         </div>
-      </div>
+      </motion.div>
 
       {/* AI Prompts Configuration */}
-      <div className="bg-slate-900/40 rounded-3xl p-5 shadow-2xl border border-white/5 backdrop-blur-xl space-y-4">
+      <motion.div variants={itemVariants} className="bg-slate-900/40 rounded-3xl p-5 shadow-2xl border border-white/5 backdrop-blur-xl space-y-4">
         <div className="flex items-center gap-2 mb-2">
           <SettingsIcon className="w-5 h-5 text-purple-400" />
           <h2 className="text-sm font-medium text-white">Cấu hình AI Prompt</h2>
@@ -403,10 +422,10 @@ export default function Settings() {
             />
           </div>
         </div>
-      </div>
+      </motion.div>
 
       {/* SKU Tiers Configuration */}
-      <div className="bg-slate-900/40 rounded-3xl p-5 shadow-2xl border border-white/5 backdrop-blur-xl space-y-4">
+      <motion.div variants={itemVariants} className="bg-slate-900/40 rounded-3xl p-5 shadow-2xl border border-white/5 backdrop-blur-xl space-y-4">
         <div className="flex items-center gap-2 mb-2">
           <SettingsIcon className="w-5 h-5 text-blue-400" />
           <h2 className="text-sm font-medium text-white">Cấu hình Bậc Điểm SKU</h2>
@@ -446,15 +465,18 @@ export default function Settings() {
             </div>
           ))}
         </div>
-      </div>
+      </motion.div>
 
-      <button 
+      <motion.button 
+        variants={itemVariants}
+        whileHover={{ scale: 1.02 }}
+        whileTap={{ scale: 0.98 }}
         onClick={handleSave}
-        className="w-full bg-white hover:bg-slate-200 text-slate-900 py-4 rounded-2xl transition-colors font-semibold flex items-center justify-center gap-2 mt-8"
+        className="w-full bg-white hover:bg-slate-200 text-slate-900 py-4 rounded-2xl transition-colors font-semibold flex items-center justify-center gap-2 mt-8 shadow-xl"
       >
         <Save className="w-5 h-5" />
         Lưu thay đổi
-      </button>
+      </motion.button>
 
       </div>
     </motion.div>

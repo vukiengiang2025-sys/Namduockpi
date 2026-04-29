@@ -146,15 +146,40 @@ export default function Dashboard() {
 
   const AppIconNode = APP_ICONS.find(i => i.id === settings.appIcon)?.icon || APP_ICONS[0].icon;
 
+  const containerVariants = {
+    initial: { opacity: 0 },
+    animate: {
+      opacity: 1,
+      transition: {
+        staggerChildren: 0.1,
+        delayChildren: 0.2
+      }
+    }
+  };
+
+  const itemVariants = {
+    initial: { opacity: 0, y: 20 },
+    animate: { opacity: 1, y: 0, transition: { duration: 0.5, ease: [0.22, 1, 0.36, 1] } }
+  };
+
   return (
-    <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} className="pb-40 bg-slate-950 min-h-screen font-sans selection:bg-blue-500/30">
+    <motion.div 
+      variants={containerVariants}
+      initial="initial"
+      animate="animate"
+      className="pb-40 bg-transparent min-h-screen font-sans selection:bg-blue-500/30"
+    >
       
       {/* MISSION CONTROL HEADER */}
-      <div className="sticky top-0 z-40 bg-slate-950/60 backdrop-blur-3xl border-b border-white/5 pt-8 pb-6 px-6">
+      <motion.div variants={itemVariants} className="sticky top-0 z-40 bg-slate-950/60 backdrop-blur-3xl border-b border-white/5 pt-8 pb-6 px-6">
         <div className="max-w-5xl mx-auto flex items-center justify-between">
            <div className="flex items-center gap-4">
               <div className="relative">
-                <div className="absolute inset-0 bg-blue-500 blur-xl opacity-20 rounded-full animate-pulse" />
+                <motion.div 
+                  animate={{ opacity: [0.1, 0.3, 0.1], scale: [1, 1.2, 1] }}
+                  transition={{ duration: 4, repeat: Infinity }}
+                  className="absolute inset-0 bg-blue-500 blur-xl rounded-full" 
+                />
                 <div className="relative w-12 h-12 bg-slate-900 border border-white/10 rounded-2xl flex items-center justify-center p-2.5 shadow-2xl">
                    <AppIconNode className="w-full h-full text-blue-400" />
                 </div>
@@ -168,47 +193,53 @@ export default function Dashboard() {
            </div>
 
            <div className="flex items-center gap-3">
-              <select 
+              <motion.select 
+                whileHover={{ scale: 1.05 }}
+                whileTap={{ scale: 0.95 }}
                 value={selectedMonthIndex}
                 onChange={(e) => setSelectedMonthIndex(Number(e.target.value))}
-                className="bg-slate-900 border border-white/10 rounded-2xl px-4 py-2.5 text-xs font-black text-white outline-none focus:ring-1 focus:ring-blue-500 uppercase tracking-widest"
+                className="bg-slate-900 border border-white/10 rounded-2xl px-4 py-2.5 text-xs font-black text-white outline-none focus:ring-1 focus:ring-blue-500 uppercase tracking-widest cursor-pointer appearance-none min-w-[80px] text-center"
               >
                 {Array(12).fill(0).map((_, i) => (
                   <option key={i} value={i}>T{i + 1}</option>
                 ))}
-              </select>
+              </motion.select>
            </div>
         </div>
-      </div>
+      </motion.div>
 
       <div className="max-w-5xl mx-auto px-6 mt-10 space-y-12">
         
-        {/* TIER 1: CRITICAL ALERT BANNER (Prediction Matrix) */}
+        {/* TIER 1: CRITICAL ALERT BANNER */}
         {salesStatus === 'danger' ? (
            <motion.section 
-             initial={{ opacity: 0, scale: 0.98 }} animate={{ opacity: 1, scale: 1 }}
-             className="bg-red-500/10 border border-red-500/30 rounded-[2.5rem] p-6 lg:p-8 flex flex-col md:flex-row items-center gap-6 shadow-2xl shadow-red-500/10"
+             variants={itemVariants}
+             whileHover={{ scale: 1.01 }}
+             className="bg-red-500/10 border border-red-500/30 rounded-[2.5rem] p-6 lg:p-8 flex flex-col md:flex-row items-center gap-6 shadow-2xl shadow-red-500/10 relative overflow-hidden group"
            >
-              <div className="w-16 h-16 bg-red-500/20 rounded-3xl flex items-center justify-center shrink-0">
+              <div className="w-16 h-16 bg-red-500/20 rounded-3xl flex items-center justify-center shrink-0 z-10">
                  <Zap className="w-8 h-8 text-red-500 animate-pulse" />
               </div>
-              <div className="flex-1 text-center md:text-left">
+              <div className="flex-1 text-center md:text-left z-10">
                  <h3 className="text-xl font-black text-white italic mb-1 uppercase tracking-tight">Cảnh báo Run-rate</h3>
                  <p className="text-sm text-red-500/80 font-bold max-w-xl">
-                   Dự báo cuối tháng chỉ đạt <span className="text-white underline">{projectedSalesRatio.toFixed(1)}%</span>. 
-                   Thiếu hụt <span className="text-white">{(month.salesTarget - projectedSalesEndOfMonth).toLocaleString()}đ</span> nếu không thay đổi chiến thuật.
+                   Dự báo đạt <span className="text-white underline">{projectedSalesRatio.toFixed(1)}%</span>. 
+                   Thiếu <span className="text-white">{(month.salesTarget - projectedSalesEndOfMonth).toLocaleString()}đ</span> nếu không bứt phá.
                  </p>
               </div>
-              <button 
+              <motion.button 
+                whileHover={{ scale: 1.05, boxShadow: "0 0 20px rgba(239, 68, 68, 0.4)" }}
+                whileTap={{ scale: 0.95 }}
                 onClick={handleAnalyze}
-                className="px-8 py-4 bg-red-500 text-white rounded-2xl font-black text-[10px] uppercase tracking-widest shadow-xl shadow-red-500/20 active:scale-95 transition-all w-full md:w-auto"
+                className="px-8 py-4 bg-red-500 text-white rounded-2xl font-black text-[10px] uppercase tracking-widest shadow-xl shadow-red-500/20 transition-all w-full md:w-auto z-10"
               >
-                Xem giải pháp cứu vãn
-              </button>
+                Xem giải pháp
+              </motion.button>
+              <div className="absolute inset-0 bg-gradient-to-r from-red-500/5 to-transparent skew-x-12 translate-x-full group-hover:translate-x-0 transition-transform duration-1000" />
            </motion.section>
         ) : salesRatio < timeElapsedRatio ? (
           <motion.section 
-             initial={{ opacity: 0 }} animate={{ opacity: 1 }}
+             variants={itemVariants}
              className="bg-yellow-500/10 border border-yellow-500/30 rounded-[2.5rem] p-6 flex flex-col md:flex-row items-center gap-6"
            >
               <div className="w-12 h-12 bg-yellow-500/20 rounded-2xl flex items-center justify-center shrink-0">
@@ -216,39 +247,53 @@ export default function Dashboard() {
               </div>
               <div className="flex-1 text-center md:text-left">
                  <p className="text-sm text-yellow-500/80 font-bold">
-                   Tiến độ đang bám sát nhưng run-rate dự báo đạt <span className="text-white">{projectedSalesRatio.toFixed(1)}%</span>. Một chút bứt phá hôm nay sẽ giúp bạn về đích an toàn.
+                   Tiến độ chậm. Dự báo <span className="text-white">{projectedSalesRatio.toFixed(1)}%</span>. Cần bứt phá ngay hôm nay.
                  </p>
               </div>
-              <button onClick={handleAnalyze} className="text-yellow-500 text-[10px] font-black uppercase tracking-widest hover:underline">Phân tích bứt phá</button>
-           </motion.section>
+              <button onClick={handleAnalyze} className="text-yellow-500 text-[10px] font-black uppercase tracking-widest hover:underline px-4 py-2 rounded-xl hover:bg-yellow-500/10 transition-colors">Phân tích</button>
+          </motion.section>
         ) : null}
 
-        {/* TIER 2: ACTION HUB (Daily Battle Plan) - MOVED UP */}
-        <section className="relative overflow-hidden bg-slate-900/40 rounded-[3rem] border border-white/5 p-8 backdrop-blur-2xl shadow-2xl">
-           <div className="absolute top-0 right-0 p-10 opacity-5 pointer-events-none">
-              <Sparkles className="w-48 h-48 text-blue-500" />
-           </div>
+        {/* TIER 2: ACTION HUB */}
+        <motion.section variants={itemVariants} className="relative overflow-hidden bg-slate-900/40 rounded-[3rem] border border-white/5 p-8 backdrop-blur-2xl shadow-2xl group">
+           <motion.div 
+             animate={{ rotate: 360 }}
+             transition={{ duration: 40, repeat: Infinity, ease: "linear" }}
+             className="absolute -top-20 -right-20 p-10 opacity-5 pointer-events-none"
+           >
+              <Sparkles className="w-64 h-64 text-blue-500" />
+           </motion.div>
            
-           <div className="flex flex-col md:flex-row md:items-center justify-between gap-6 mb-10">
+           <div className="flex flex-col md:flex-row md:items-center justify-between gap-6 mb-10 relative z-10">
               <div className="flex items-center gap-4">
-                <div className="w-14 h-14 bg-gradient-to-tr from-blue-600 to-indigo-600 rounded-[1.5rem] flex items-center justify-center shadow-lg shadow-blue-900/20">
+                <motion.div 
+                  whileHover={{ rotate: 180 }}
+                  className="w-14 h-14 bg-gradient-to-tr from-blue-600 to-indigo-600 rounded-[1.5rem] flex items-center justify-center shadow-lg shadow-blue-900/20 cursor-pointer transition-transform"
+                >
                    <Zap className="w-7 h-7 text-white fill-current" />
-                </div>
+                </motion.div>
                 <div>
                    <h2 className="text-2xl font-black text-white tracking-tight uppercase">Battle Plan</h2>
-                   <p className="text-[10px] text-slate-500 font-bold uppercase tracking-[0.2em]">Cố vấn chiến thuật hằng ngày</p>
+                   <p className="text-[10px] text-slate-500 font-bold uppercase tracking-[0.2em]">Kế hoạch hành động hôm nay</p>
                 </div>
               </div>
 
               {dailyTasks.length > 0 && (
-                <div className="bg-slate-950/80 border border-white/10 px-6 py-4 rounded-3xl flex items-center gap-6 shrink-0">
+                <div className="bg-slate-950/80 border border-white/10 px-6 py-4 rounded-3xl flex items-center gap-6 shrink-0 backdrop-blur-md">
                    <div>
-                      <p className="text-[8px] text-slate-500 uppercase font-black tracking-widest mb-0.5">Mục tiêu hôm nay</p>
-                      <span className="text-xl font-black text-blue-400 font-mono tracking-tighter">{lastInsight?.daily_target || '--'}</span>
+                      <p className="text-[8px] text-slate-500 uppercase font-black tracking-widest mb-0.5">Hôm nay</p>
+                      <motion.span 
+                        key={lastInsight?.daily_target}
+                        initial={{ opacity: 0, y: 5 }}
+                        animate={{ opacity: 1, y: 0 }}
+                        className="text-xl font-black text-blue-400 font-mono tracking-tighter"
+                      >
+                        {lastInsight?.daily_target || '--'}
+                      </motion.span>
                    </div>
                    <div className="w-px h-8 bg-white/10" />
                    <div>
-                      <p className="text-[8px] text-slate-500 uppercase font-black tracking-widest mb-0.5">Tiến trình</p>
+                      <p className="text-[8px] text-slate-500 uppercase font-black tracking-widest mb-0.5">Tiến độ</p>
                       <span className="text-xl font-black text-white font-mono">{dailyTasks.filter(t => t.isCompleted).length}/{dailyTasks.length}</span>
                    </div>
                 </div>
@@ -256,7 +301,7 @@ export default function Dashboard() {
            </div>
 
            {dailyTasks.length > 0 ? (
-              <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+              <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6 relative z-10">
                  {dailyTasks.map((task, idx) => (
                     <ActionCard 
                       key={task.id}
@@ -267,37 +312,47 @@ export default function Dashboard() {
                  ))}
               </div>
            ) : (
-              <div 
+              <motion.div 
+                whileHover={{ scale: 1.01, backgroundColor: "rgba(255,255,255,0.05)" }}
+                whileTap={{ scale: 0.99 }}
                 onClick={handleAnalyze}
-                className="py-16 text-center border-2 border-dashed border-white/5 rounded-[2.5rem] cursor-pointer hover:bg-white/5 transition-all group"
+                className="py-16 text-center border-2 border-dashed border-white/5 rounded-[2.5rem] cursor-pointer transition-all group relative z-10"
               >
-                 <BrainCircuit className="w-12 h-12 text-slate-800 mx-auto mb-4 group-hover:text-blue-500 transition-colors" />
-                 <h3 className="text-white font-black uppercase text-xs tracking-widest mb-1 italic">Nạp chiến thuật chiến thuật mới</h3>
-                 <p className="text-sm font-bold text-slate-600 italic">"Sẵn sàng nạp chỉ thị từ AI Advisor..."</p>
-              </div>
+                 <BrainCircuit className="w-12 h-12 text-slate-800 mx-auto mb-4 group-hover:text-blue-500 group-hover:scale-110 shadow-blue-500/20 transition-all" />
+                 <h3 className="text-white font-black uppercase text-xs tracking-widest mb-1 italic">Nạp chỉ thị từ AI</h3>
+                 <p className="text-sm font-bold text-slate-600 italic">"Hệ thống đang đợi dữ liệu phân tích..."</p>
+              </motion.div>
            )}
-        </section>
+        </motion.section>
 
-        {/* TIER 3: KPI RADAR (Essential Metrics) */}
-        <section>
-           <div className="flex items-center justify-between mb-8 px-4">
+        {/* TIER 3: KPI RADAR */}
+        <section className="space-y-8">
+           <motion.div variants={itemVariants} className="flex items-center justify-between px-4">
               <div className="flex flex-col">
-                <span className="text-[10px] font-black text-slate-600 uppercase tracking-[0.2em] mb-1">Radar Hệ thống</span>
-                <div className="h-0.5 w-12 bg-blue-500/50 rounded-full" />
+                <span className="text-[10px] font-black text-slate-600 uppercase tracking-[0.2em] mb-1">Dòng chảy KPI</span>
+                <motion.div 
+                  initial={{ width: 0 }}
+                  animate={{ width: 48 }}
+                  className="h-0.5 bg-blue-500/50 rounded-full" 
+                />
               </div>
-              <div className="flex items-center gap-4">
+              <div className="flex items-center gap-6">
                  <div className="text-right">
-                    <p className="text-[8px] text-slate-600 uppercase font-black">Thời gian trôi qua</p>
+                    <p className="text-[8px] text-slate-600 uppercase font-black tracking-tighter">Thời gian trôi</p>
                     <p className="text-xs font-black text-white">{timeElapsedRatio.toFixed(1)}%</p>
                  </div>
                  <div className="text-right">
-                    <p className="text-[8px] text-slate-600 uppercase font-black">Dự báo kết thúc</p>
-                    <p className={cn("text-xs font-black", projectedSalesRatio >= 100 ? "text-emerald-500" : "text-yellow-500")}>
+                    <p className="text-[8px] text-slate-600 uppercase font-black tracking-tighter">Dự báo đích</p>
+                    <motion.p 
+                      animate={{ opacity: [0.7, 1, 0.7] }}
+                      transition={{ duration: 2, repeat: Infinity }}
+                      className={cn("text-xs font-black", projectedSalesRatio >= 100 ? "text-emerald-500" : "text-yellow-500")}
+                    >
                       {projectedSalesRatio.toFixed(1)}%
-                    </p>
+                    </motion.p>
                  </div>
               </div>
-           </div>
+           </motion.div>
            
            <div className="grid grid-cols-2 lg:grid-cols-4 gap-4">
               <CommandMetric 
@@ -323,7 +378,7 @@ export default function Dashboard() {
                 icon={PieChart} 
               />
               <CommandMetric 
-                title="Sức mạnh KPI" 
+                title="Năng lực" 
                 value={monthTotalKPI.toFixed(1)} 
                 percent={Math.min(100, monthTotalKPI)} 
                 status={salesStatus === 'danger' ? 'danger' : 'success'} 
@@ -332,181 +387,240 @@ export default function Dashboard() {
            </div>
         </section>
 
-        {/* TIER 4: SECONDARY INSIGHTS GRID */}
-        <div className="grid grid-cols-1 lg:grid-cols-12 gap-8 items-start">
+        {/* TIER 4: SECONDARY INSIGHTS */}
+        <div className="grid grid-cols-1 lg:grid-cols-12 gap-8 items-start pb-20">
            
-           <div className="lg:col-span-8 space-y-8">
-              {/* AI STRATEGIST - Compacted */}
-              <section className="p-8 bg-slate-900/40 rounded-[3rem] border border-white/5 relative overflow-hidden group">
+           <motion.div variants={itemVariants} className="lg:col-span-8 space-y-8">
+              <section className="p-8 bg-slate-900/40 rounded-[3rem] border border-white/5 relative overflow-hidden group hover:bg-slate-900/60 transition-colors">
                  <div className="absolute top-0 left-0 w-1 h-full bg-indigo-500/50" />
-                 <div className="flex items-center gap-3 mb-6">
-                    <div className="p-2 bg-indigo-500/20 rounded-xl">
-                       <Lightbulb className="w-5 h-5 text-indigo-400" />
+                 <div className="flex items-center gap-3 mb-8">
+                    <div className="p-2.5 bg-indigo-500/20 rounded-xl">
+                       <Lightbulb className="w-5 h-5 text-indigo-400 group-hover:rotate-12 transition-transform" />
                     </div>
                     <div>
-                       <h3 className="text-sm font-black text-white uppercase tracking-widest">AI Strategist Insights</h3>
-                       <p className="text-[9px] text-indigo-500 uppercase font-black">Neural Network Analysis</p>
+                       <h3 className="text-sm font-black text-white uppercase tracking-widest">AI Strategist</h3>
+                       <p className="text-[9px] text-indigo-500 uppercase font-black tracking-widest">Neural Insights</p>
                     </div>
                  </div>
                  
                  <div className="relative">
-                   <p className="text-sm font-bold text-slate-300 leading-relaxed italic mb-8">
-                     "{lastInsight?.main_issue || 'Hệ thống đã sẵn sàng. Hãy bắt đầu phân tích để nhận chỉ dẫn từ Deep Strategist.'}"
-                   </p>
+                   <AnimatePresence mode="wait">
+                     <motion.p 
+                       key={lastInsight?.main_issue}
+                       initial={{ opacity: 0, x: -10 }}
+                       animate={{ opacity: 1, x: 0 }}
+                       className="text-sm font-bold text-slate-300 leading-relaxed italic mb-8"
+                     >
+                       "{lastInsight?.main_issue || 'Hệ thống đã sẵn sàng. Hãy nạp thực tế để AI Architect tính toán các bước đi tiếp theo cho bạn.'}"
+                     </motion.p>
+                   </AnimatePresence>
+                   
                    {lastInsight?.riskAlert && (
-                     <div className="bg-red-500/10 border-l-4 border-red-500 p-4 rounded-r-xl mb-6">
-                        <p className="text-[10px] font-black text-red-500 uppercase tracking-widest mb-1">Cảnh báo rủi ro</p>
-                        <p className="text-xs font-bold text-red-200/80">{lastInsight.riskAlert}</p>
-                     </div>
+                     <motion.div 
+                       initial={{ x: -20, opacity: 0 }}
+                       animate={{ x: 0, opacity: 1 }}
+                       className="bg-red-500/10 border-l-4 border-red-500 p-5 rounded-r-2xl mb-6 shadow-lg shadow-red-500/5"
+                     >
+                        <p className="text-[10px] font-black text-red-500 uppercase tracking-widest mb-1 outline-none">Cảnh báo rủi ro</p>
+                        <p className="text-xs font-bold text-red-200/90">{lastInsight.riskAlert}</p>
+                     </motion.div>
                    )}
                  </div>
 
                  {lastInsight?.references && lastInsight.references.length > 0 && (
                    <div className="flex flex-wrap gap-2 pt-6 border-t border-white/5">
-                      {lastInsight.references.map(ref => (
-                        <span key={ref} className="text-[8px] text-slate-600 font-black uppercase px-2 py-1 bg-white/5 rounded transition-colors hover:bg-white/10">{ref}</span>
+                      {lastInsight.references.map((ref, idx) => (
+                        <motion.span 
+                          initial={{ opacity: 0, scale: 0.8 }}
+                          animate={{ opacity: 1, scale: 1 }}
+                          transition={{ delay: 0.5 + (idx * 0.1) }}
+                          key={ref} 
+                          className="text-[8px] text-slate-500 font-bold uppercase px-3 py-1.5 bg-white/5 rounded-lg transition-all hover:bg-white/10 hover:text-white"
+                        >
+                          {ref}
+                        </motion.span>
                       ))}
                    </div>
                  )}
               </section>
 
-              {/* Memory / Notes Quick View */}
-              <section 
+              <motion.section 
+                whileHover={{ scale: 1.01, backgroundColor: "rgba(15,23,42,0.6)" }}
+                whileTap={{ scale: 0.99 }}
                 onClick={() => setIsMemoryOpen(true)}
-                className="group p-8 bg-slate-900/40 rounded-[3rem] border border-white/5 cursor-pointer hover:bg-slate-900/60 transition-all border-dashed"
+                className="group p-8 bg-slate-900/40 rounded-[3rem] border border-white/5 border-dashed cursor-pointer transition-all"
               >
                   <div className="flex items-center justify-between">
-                    <div className="flex items-center gap-4">
-                       <div className="p-3 bg-purple-500/10 rounded-2xl text-purple-400 group-hover:scale-110 transition-transform"><BrainCircuit className="w-6 h-6" /></div>
+                    <div className="flex items-center gap-5">
+                       <div className="p-4 bg-purple-500/10 rounded-2xl text-purple-400 group-hover:scale-110 group-hover:rotate-6 transition-all duration-500">
+                         <BrainCircuit className="w-7 h-7" />
+                       </div>
                        <div>
-                          <h3 className="text-white font-black uppercase text-xs tracking-widest">Ký ức & Ghi chú</h3>
-                          <p className="text-[9px] text-slate-500 font-bold uppercase tracking-widest">{memories.length} bản ghi trong Archives</p>
+                          <h3 className="text-white font-black uppercase text-xs tracking-widest">Archives & Memory</h3>
+                          <p className="text-[9px] text-slate-500 font-bold uppercase tracking-widest">{memories.length} bản ghi trong bộ nhớ</p>
                        </div>
                     </div>
-                    <ChevronRight className="w-5 h-5 text-slate-700 group-hover:text-purple-400 group-hover:translate-x-1 transition-all" />
+                    <ChevronRight className="w-6 h-6 text-slate-700 group-hover:text-purple-400 group-hover:translate-x-2 transition-all duration-300" />
                   </div>
-              </section>
-           </div>
+              </motion.section>
+           </motion.div>
 
-           {/* RIGHT HUB: Tactical Metrics */}
-           <div className="lg:col-span-4 space-y-8">
-              <section className="bg-slate-900/40 rounded-[2.5rem] border border-white/5 p-8 backdrop-blur-3xl shadow-2xl">
-                 <h3 className="text-[10px] text-slate-500 font-black uppercase tracking-[0.2em] mb-8 flex items-center justify-between">
-                   <span>Tactical Gap</span>
-                   <Clock className="w-3.5 h-3.5 opacity-30" />
-                 </h3>
+           <motion.div variants={itemVariants} className="lg:col-span-4 space-y-8">
+              <section className="bg-slate-900/40 rounded-[2.5rem] border border-white/5 p-8 backdrop-blur-3xl shadow-2xl relative overflow-hidden">
+                 <div className="flex items-center justify-between mb-8 opacity-80">
+                   <span className="text-[10px] text-slate-500 font-black uppercase tracking-[0.2em]">Phân tích Gap</span>
+                   <Clock className="w-3.5 h-3.5 text-slate-600" />
+                 </div>
                  <div className="space-y-4">
                     {[
-                      { label: 'Chênh lệch Doanh số', value: (month.salesTarget - month.salesActual).toLocaleString() + 'đ', desc: 'Gap', status: 'danger' },
-                      { label: 'Doanh số Ngày cần', value: requiredDailySales.toLocaleString() + 'đ', desc: 'Quota', status: 'warning' },
-                      { label: 'Độ bao phủ thực tế', value: month.coverageActual.toString(), desc: 'Active Sites', status: 'stable' },
-                    ].map(item => (
-                      <div key={item.label} className="bg-slate-950 p-5 rounded-[1.5rem] border border-white/5">
-                         <div className="flex items-center justify-between mb-1">
+                      { label: 'Doanh số thiếu', value: (month.salesTarget - month.salesActual).toLocaleString() + 'đ', desc: 'Gap', status: 'danger' },
+                      { label: 'Hạn mức Ngày', value: requiredDailySales.toLocaleString() + 'đ', desc: 'Quota', status: 'warning' },
+                      { label: 'Số Site hoạt động', value: month.coverageActual.toString(), desc: 'Active Sites', status: 'stable' },
+                    ].map((item, idx) => (
+                      <motion.div 
+                        initial={{ opacity: 0, x: 20 }}
+                        animate={{ opacity: 1, x: 0 }}
+                        transition={{ delay: 0.8 + (idx * 0.1) }}
+                        key={item.label} 
+                        className="bg-slate-950/50 p-5 rounded-[1.5rem] border border-white/5 hover:border-white/10 transition-colors"
+                      >
+                         <div className="flex items-center justify-between mb-2">
                             <p className="text-[9px] text-slate-600 uppercase font-black tracking-widest">{item.label}</p>
-                            <span className={cn(
-                              "w-1.5 h-1.5 rounded-full shadow-[0_0_8px]",
-                              item.status === 'danger' ? "bg-red-500 shadow-red-500/50" : item.status === 'warning' ? "bg-yellow-500 shadow-yellow-500/50" : "bg-emerald-500 shadow-emerald-500/50"
-                            )}></span>
+                            <motion.span 
+                              animate={{ scale: [1, 1.2, 1], opacity: [0.5, 1, 0.5] }}
+                              transition={{ duration: 2, repeat: Infinity }}
+                              className={cn(
+                                "w-1.5 h-1.5 rounded-full shadow-[0_0_10px]",
+                                item.status === 'danger' ? "bg-red-500 shadow-red-500/50" : item.status === 'warning' ? "bg-yellow-500 shadow-yellow-500/50" : "bg-emerald-500 shadow-emerald-500/50"
+                              )} 
+                            />
                          </div>
                          <div className="flex items-end justify-between">
                             <span className="text-lg font-black text-white font-mono leading-none tracking-tighter">{item.value}</span>
-                            <span className="text-[7px] text-slate-600 font-bold uppercase tracking-tighter">{item.desc}</span>
+                            <span className="text-[7px] text-slate-700 font-bold uppercase tracking-widest">{item.desc}</span>
                          </div>
-                      </div>
+                      </motion.div>
                     ))}
                  </div>
               </section>
 
-              <section className="bg-slate-900/40 rounded-[2.5rem] border border-white/5 p-8">
+              <section className="bg-slate-900/40 rounded-[2.5rem] border border-white/5 p-8 group">
                  <h3 className="text-[10px] text-slate-500 font-black uppercase tracking-[0.2em] mb-6 flex items-center gap-2">
-                    <Database className="w-4 h-4" /> Hệ thống
+                    <Database className="w-4 h-4 group-hover:text-blue-400 transition-colors" /> Cơ sở dữ liệu
                  </h3>
-                 <div className="flex flex-col gap-2">
-                    <button 
+                 <div className="flex flex-col gap-3">
+                    <motion.button 
+                       whileHover={{ scale: 1.02, x: 5 }}
+                       whileTap={{ scale: 0.98 }}
                        onClick={handleExportExcel}
-                       className="flex items-center justify-between w-full px-5 py-4 bg-emerald-500/5 hover:bg-emerald-500/10 text-emerald-400 rounded-2xl border border-emerald-500/20 transition-all text-[9px] font-black uppercase tracking-widest"
+                       className="flex items-center justify-between w-full px-5 py-5 bg-emerald-500/5 hover:bg-emerald-500/10 text-emerald-400 rounded-2xl border border-emerald-500/20 transition-all text-[9.5px] font-black uppercase tracking-[0.15em] shadow-lg shadow-emerald-950/20"
                     >
-                      <span className="flex items-center gap-2"><FileSpreadsheet className="w-4 h-4" /> Excel Export</span>
-                      <ChevronRight className="w-3.5 h-3.5" />
-                    </button>
-                    <div className="grid grid-cols-2 gap-2">
-                       <button onClick={handleBackup} className="py-3 bg-white/5 rounded-xl border border-white/5 flex flex-col items-center hover:bg-white/10 transition-colors">
-                          <Download className="w-4 h-4 mb-1 text-slate-500" />
-                          <span className="text-[7px] font-black text-slate-500 uppercase">Backup</span>
-                       </button>
-                       <button onClick={() => fileInputRef.current?.click()} className="py-3 bg-white/5 rounded-xl border border-white/5 flex flex-col items-center hover:bg-white/10 transition-colors">
-                          <Upload className="w-4 h-4 mb-1 text-slate-500" />
-                          <span className="text-[7px] font-black text-slate-500 uppercase">Restore</span>
-                       </button>
+                      <span className="flex items-center gap-3"><FileSpreadsheet className="w-4.5 h-4.5" /> Báo cáo Excel</span>
+                      <ChevronRight className="w-4 h-4 opacity-50" />
+                    </motion.button>
+                    <div className="grid grid-cols-2 gap-3">
+                       <motion.button 
+                         whileHover={{ y: -2, backgroundColor: "rgba(255,255,255,0.08)" }}
+                         whileTap={{ scale: 0.95 }}
+                         onClick={handleBackup} 
+                         className="py-4 bg-white/5 rounded-2xl border border-white/5 flex flex-col items-center justify-center transition-all"
+                       >
+                          <Download className="w-4 h-4 mb-2 text-slate-500" />
+                          <span className="text-[7px] font-black text-slate-500 uppercase tracking-widest">Backup</span>
+                       </motion.button>
+                       <motion.button 
+                         whileHover={{ y: -2, backgroundColor: "rgba(255,255,255,0.08)" }}
+                         whileTap={{ scale: 0.95 }}
+                         onClick={() => fileInputRef.current?.click()} 
+                         className="py-4 bg-white/5 rounded-2xl border border-white/5 flex flex-col items-center justify-center transition-all"
+                       >
+                          <Upload className="w-4 h-4 mb-2 text-slate-500" />
+                          <span className="text-[7px] font-black text-slate-500 uppercase tracking-widest">Restore</span>
+                       </motion.button>
                     </div>
                  </div>
                  <input type="file" accept=".json" className="hidden" ref={fileInputRef} onChange={handleImport} />
               </section>
-           </div>
+           </motion.div>
         </div>
       </div>
 
-      {/* TIER 5: MISSION CONTROL NAVIGATION (Bottom Global) */}
-      <div className="fixed bottom-0 left-0 right-0 z-50 p-6 pointer-events-none">
-         <div className="max-w-2xl mx-auto flex items-center justify-between pointer-events-auto">
+      {/* TIER 5: MISSION CONTROL NAVIGATION */}
+      <motion.div 
+        initial={{ y: 100 }}
+        animate={{ y: 0 }}
+        transition={{ delay: 1, type: 'spring', damping: 20 }}
+        className="fixed bottom-0 left-0 right-0 z-50 p-8 pt-0 pointer-events-none"
+      >
+         <div className="max-w-xl mx-auto flex items-center justify-between pointer-events-auto">
             
-            <div className="flex bg-slate-900/80 backdrop-blur-3xl border border-white/10 p-2 rounded-[2.5rem] shadow-2xl scale-90 sm:scale-100">
-               <button onClick={() => setSelectedMonthIndex((currentMonthIndex - 1 + 12) % 12)} className="w-12 h-12 rounded-full flex items-center justify-center text-slate-400 hover:text-white transition-colors">
+            <div className="flex bg-slate-900/80 backdrop-blur-3xl border border-white/10 p-2.5 rounded-full shadow-[0_30px_60px_rgba(0,0,0,0.5)] scale-90 sm:scale-100 relative group overflow-hidden">
+               <button onClick={() => setSelectedMonthIndex((currentMonthIndex - 1 + 12) % 12)} className="w-12 h-12 rounded-full flex items-center justify-center text-slate-400 hover:text-white transition-colors relative z-10 active:scale-90">
                   <ArrowLeft className="w-5 h-5" />
                </button>
-               <div className="w-px h-8 self-center bg-white/10" />
-               <button 
+               <div className="w-px h-8 self-center bg-white/10 relative z-10" />
+               <motion.button 
+                  whileHover={{ scale: 1.1 }}
+                  whileTap={{ scale: 0.9 }}
                   onClick={() => setIsMemoryOpen(true)}
                   className={cn(
-                    "w-12 h-12 rounded-full flex items-center justify-center transition-all",
+                    "w-12 h-12 rounded-full flex items-center justify-center transition-all relative z-10",
                     isMemoryOpen ? "text-purple-400" : "text-slate-400 hover:text-white"
                   )}
                 >
                   <BrainCircuit className="w-5 h-5" />
-               </button>
-               <button 
+               </motion.button>
+               <motion.button 
+                  whileHover={{ scale: 1.1 }}
+                  whileTap={{ scale: 0.9 }}
                   onClick={() => setIsDataEntryOpen(true)}
                   className={cn(
-                    "w-12 h-12 rounded-full flex items-center justify-center transition-all",
+                    "w-12 h-12 rounded-full flex items-center justify-center transition-all relative z-10",
                     isDataEntryOpen ? "text-blue-400" : "text-slate-400 hover:text-white"
                   )}
                 >
                   <Database className="w-5 h-5" />
-               </button>
+               </motion.button>
+               <div className="absolute inset-0 bg-white/5 opacity-0 group-hover:opacity-100 transition-opacity" />
             </div>
 
-            <div className="flex items-center gap-3">
-               <button 
+            <div className="flex items-center gap-4">
+               <motion.button 
+                 whileHover={{ scale: 1.05, boxShadow: "0 20px 40px rgba(255,255,255,0.15)" }}
+                 whileTap={{ scale: 0.95 }}
                  onClick={() => setIsDataEntryOpen(true)}
-                 className="h-16 px-8 bg-white text-slate-950 font-black text-xs uppercase tracking-widest rounded-full shadow-2xl shadow-blue-500/20 active:scale-95 transition-all flex items-center gap-3"
+                 className="h-16 px-8 bg-white text-slate-950 font-black text-[11px] uppercase tracking-[0.2em] rounded-full shadow-2xl active:scale-95 transition-all flex items-center gap-3"
                >
                   <PlusCircle className="w-5 h-5" />
                   <span className="hidden sm:inline">Check-in</span>
-               </button>
+               </motion.button>
 
-               <button 
+               <motion.button 
+                 whileHover={{ scale: 1.1, rotate: 90 }}
+                 whileTap={{ scale: 0.9 }}
                  onClick={handleAnalyze}
                  disabled={isAnalyzing}
                  className={cn(
-                   "w-16 h-16 rounded-full flex items-center justify-center transition-all relative overflow-hidden active:scale-90",
-                   isAnalyzing ? "bg-slate-800" : "bg-blue-600 shadow-2xl shadow-blue-600/40"
+                   "w-16 h-16 rounded-full flex items-center justify-center transition-all relative overflow-hidden shadow-2xl shadow-blue-500/40",
+                   isAnalyzing ? "bg-slate-800" : "bg-blue-600"
                  )}
                >
-                  <div className="absolute inset-0 bg-gradient-to-tr from-white/20 to-transparent" />
+                  <div className="absolute inset-0 bg-gradient-to-tr from-white/30 to-transparent" />
                   {isAnalyzing ? (
                     <Loader2 className="w-7 h-7 text-white animate-spin" />
                   ) : (
-                    <motion.div animate={{ rotate: 360 }} transition={{ duration: 10, repeat: Infinity, ease: 'linear' }}>
+                    <motion.div 
+                      animate={{ rotate: 360 }} 
+                      transition={{ duration: 15, repeat: Infinity, ease: 'linear' }}
+                    >
                        <Sparkles className="w-7 h-7 text-white" />
                     </motion.div>
                   )}
-               </button>
+               </motion.button>
             </div>
 
          </div>
-      </div>
-
+      </motion.div>
 
       {/* SLIDE-OVER PANELS (Refined) */}
       <AnimatePresence>

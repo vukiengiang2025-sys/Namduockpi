@@ -194,39 +194,57 @@ export default function Notes() {
     }
   };
 
+  const containerVariants = {
+    initial: { opacity: 0 },
+    animate: {
+      opacity: 1,
+      transition: {
+        staggerChildren: 0.05,
+        delayChildren: 0.1
+      }
+    }
+  };
+
+  const itemVariants = {
+    initial: { opacity: 0, y: 15 },
+    animate: { opacity: 1, y: 0, transition: { duration: 0.4, ease: [0.22, 1, 0.36, 1] } }
+  };
+
   return (
     <motion.div 
-      initial={{ opacity: 0, x: 20 }}
-      animate={{ opacity: 1, x: 0 }}
-      exit={{ opacity: 0, x: -20 }}
-      className="space-y-6 px-5 pt-8 pb-4"
+      variants={containerVariants}
+      initial="initial"
+      animate="animate"
+      className="space-y-6 px-5 pt-8 pb-32"
     >
-      <div className="flex items-center justify-between pointer-events-none">
+      <motion.div variants={itemVariants} className="flex items-center justify-between pointer-events-none">
         <div className="flex items-center gap-2">
           <span className="w-2 h-2 bg-yellow-500 rounded-full"></span>
           <span className="text-[10px] text-slate-400 uppercase tracking-widest font-medium">Trung tâm tri thức</span>
         </div>
-      </div>
+      </motion.div>
       
-      <div className="flex items-start justify-between">
-        <h1 className="text-2xl font-light text-white tracking-tight">Ký ức & <span className="font-bold">Ghi chú</span></h1>
-      </div>
+      <motion.div variants={itemVariants} className="flex items-start justify-between">
+        <h1 className="text-3xl font-black text-white tracking-tight uppercase italic underline decoration-yellow-500/30 decoration-4 underline-offset-8">
+           Archives <span className="text-yellow-500">System</span>
+        </h1>
+      </motion.div>
 
-      <div className="flex bg-slate-900/50 p-1 rounded-xl mb-6">
+      <motion.div variants={itemVariants} className="flex bg-slate-900/50 p-1.5 rounded-2xl mb-6 border border-white/5 backdrop-blur-xl">
         <button
           onClick={() => setActiveTab('notes')}
-          className={`flex-1 py-2 rounded-lg text-sm font-medium transition-colors ${activeTab === 'notes' ? 'bg-slate-800 text-white shadow' : 'text-slate-400 hover:text-slate-200'}`}
+          className={`flex-1 py-2.5 rounded-xl text-xs font-black uppercase tracking-widest transition-all ${activeTab === 'notes' ? 'bg-white text-slate-950 shadow-xl' : 'text-slate-400 hover:text-slate-200'}`}
         >
           Lời nhắc
         </button>
         <button
           onClick={() => setActiveTab('memories')}
-          className={`flex-1 py-2 rounded-lg text-sm font-medium transition-colors flex items-center justify-center gap-1.5 ${activeTab === 'memories' ? 'bg-slate-800 text-white shadow' : 'text-slate-400 hover:text-slate-200'}`}
+          className={`flex-1 py-2.5 rounded-xl text-xs font-black uppercase tracking-widest transition-all flex items-center justify-center gap-2 ${activeTab === 'memories' ? 'bg-white text-slate-950 shadow-xl' : 'text-slate-400 hover:text-slate-200'}`}
         >
           <BrainCircuit className="w-4 h-4" />
           Ký ức AI
         </button>
-      </div>
+      </motion.div>
 
       {activeTab === 'notes' && (
         <motion.div initial={{opacity: 0, y: 10}} animate={{opacity:1, y:0}} className="space-y-6">
