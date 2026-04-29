@@ -38,4 +38,23 @@ body.light-mode .bg-slate-800\/80 {
 
 body {
   @apply bg-slate-950 text-slate-200 font-sans antialiased overflow-x-hidden transition-colors duration-300;
+  touch-action: manipulation;
+}
+
+@keyframes bounce-x {
+  0%, 100% { transform: translateX(0); }
+  50% { transform: translateX(5px); }
+}
+
+.animate-bounce-x {
+  animation: bounce-x 1s infinite;
+}
+
+/* Custom hide scrollbar */
+.no-scrollbar::-webkit-scrollbar {
+  display: none;
+}
+.no-scrollbar {
+  -ms-overflow-style: none;
+  scrollbar-width: none;
 }

@@ -9,11 +9,14 @@ import { LayoutDashboard, FileSpreadsheet, CalendarDays, ClipboardList, BarChart
 import { cn } from './lib/utils';
 import { motion, AnimatePresence } from 'motion/react';
 import { useAppStore } from './store';
+import Login from './pages/Login';
+import { FirebaseSync } from './components/FirebaseSync';
+import { logout } from './lib/firebase';
 
 export default function App() {
   const [activeTab, setActiveTab] = useState<'dashboard' | 'yearly' | 'weekly' | 'settings'>('dashboard');
   const [isSidebarOpen, setIsSidebarOpen] = useState(false);
-  const { settings } = useAppStore();
+  const { settings, user, isLoading } = useAppStore();
 
   useEffect(() => {
     if (settings.themeMode === 'light') {
@@ -44,6 +47,27 @@ export default function App() {
   const theme = getThemeColors();
   const bgStyle = settings.bgUrl ? { backgroundImage: `url(${settings.bgUrl})`, backgroundSize: 'cover', backgroundPosition: 'center', backgroundAttachment: 'fixed' } : {};
 
+  if (isLoading) {
+    return (
+      <div className="min-h-screen bg-slate-950 flex items-center justify-center">
+        <motion.div 
+          animate={{ scale: [1, 1.2, 1], opacity: [0.5, 1, 0.5] }}
+          transition={{ duration: 2, repeat: Infinity }}
+          className="w-12 h-12 bg-blue-500 rounded-full blur-xl" 
+        />
+      </div>
+    );
+  }
+
+  if (!user) {
+    return (
+      <>
+        <FirebaseSync />
+        <Login />
+      </>
+    );
+  }
+
   const NavItem = ({ id, icon: Icon, label }: { id: typeof activeTab, icon: any, label: string }) => (
     <button
       onClick={() => {
@@ -67,6 +91,8 @@ export default function App() {
 
   return (
     <div className="min-h-screen flex text-slate-200 transition-colors duration-300 bg-slate-950 font-sans" style={bgStyle}>
+      
+      <FirebaseSync />
       
       {/* Background Blobs */}
       {!settings.bgUrl && (
@@ -96,13 +122,18 @@ export default function App() {
         </nav>
 
         <div className="mt-auto pt-6 border-t border-white/5">
-          <div className="bg-white/5 rounded-2xl p-4 flex items-center gap-3 border border-white/5">
-            <div className="w-8 h-8 rounded-full bg-slate-800 flex items-center justify-center border border-white/10 uppercase font-black text-[10px] text-slate-400">VM</div>
-            <div className="flex-1 overflow-hidden">
-              <p className="text-xs font-bold text-white truncate">Administrator</p>
-              <p className="text-[9px] text-slate-500 truncate">vu.kiengiang2025@gmail.com</p>
+          <button 
+            onClick={() => logout()}
+            className="w-full bg-white/5 hover:bg-red-500/10 rounded-2xl p-4 flex items-center gap-3 border border-white/5 transition-colors group"
+          >
+            <div className="w-8 h-8 rounded-full bg-slate-800 flex items-center justify-center border border-white/10 uppercase font-black text-[10px] text-slate-400 group-hover:border-red-500/20">
+              {user.email?.substring(0, 2).toUpperCase()}
             </div>
-          </div>
+            <div className="flex-1 overflow-hidden text-left">
+              <p className="text-xs font-bold text-white truncate">{user.displayName || 'User'}</p>
+              <p className="text-[9px] text-slate-500 truncate">{user.email}</p>
+            </div>
+          </button>
         </div>
       </aside>
 

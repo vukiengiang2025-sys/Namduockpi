@@ -1,5 +1,7 @@
 import { create } from 'zustand';
 import { persist } from 'zustand/middleware';
+import { User as FirebaseUser } from 'firebase/auth';
+import { syncMonthToFirestore, syncNoteToFirestore, deleteNoteFromFirestore, syncDailyTaskToFirestore, syncProfileToFirestore, syncSettingsToFirestore, syncMemoryToFirestore, deleteMemoryFromFirestore } from './lib/syncUtils';
 
 export interface MonthData {
   salesTarget: number;
@@ -82,6 +84,7 @@ export interface DailyTask {
   target?: number;
   done: number;
   isCompleted: boolean;
+  isStarted?: boolean;
   priority: 'high' | 'medium' | 'low';
   expectedImpact?: string;
   confidence?: number;
@@ -192,6 +195,10 @@ interface AppState {
   userProfile: UserProfile;
   lastInsight: AIInsight | null;
   settings: AppSettings;
+  user: FirebaseUser | null;
+  isLoading: boolean;
+  setUser: (user: FirebaseUser | null) => void;
+  setIsLoading: (isLoading: boolean) => void;
   updateMonth: (index: number, data: Partial<MonthData>) => void;
   updateQuarter: (index: number, data: Partial<QuarterData>) => void;
   updateHalfYear: (index: number, data: Partial<HalfYearData>) => void;
@@ -202,8 +209,9 @@ interface AppState {
   deleteNote: (id: string) => void;
   addMemory: (memory: Omit<Memory, 'id' | 'createdAt'>) => void;
   deleteMemory: (id: string) => void;
-  setDailyTasks: (tasks: Omit<DailyTask, 'id' | 'createdAt' | 'done' | 'isCompleted'>[], currentKpi?: number) => void;
+  setDailyTasks: (tasks: Omit<DailyTask, 'id' | 'createdAt' | 'done' | 'isCompleted' | 'isStarted'>[], currentKpi?: number) => void;
   toggleDailyTask: (id: string) => void;
+  startDailyTask: (id: string) => void;
   updateDailyTaskProgress: (id: string, done: number) => void;
   addDailySnapshot: (snapshot: DailySnapshot) => void;
   addWeeklyReport: (report: WeeklyReport) => void;
@@ -237,6 +245,10 @@ export const useAppStore = create<AppState>()(
         }
       },
       lastInsight: null,
+      user: null,
+      isLoading: true,
+      setUser: (user) => set({ user }),
+      setIsLoading: (isLoading) => set({ isLoading }),
       settings: {
         geminiKey: '',
         geminiModel: 'gemini-3-flash-preview',
@@ -281,6 +293,12 @@ export const useAppStore = create<AppState>()(
       updateMonth: (index, data) => set((state) => {
         const newMonths = [...state.months];
         newMonths[index] = { ...newMonths[index], ...data };
+        
+        // Sync to Firebase if user is logged in
+        if (state.user) {
+          syncMonthToFirestore(state.user.uid, index, newMonths[index]);
+        }
+        
         return { months: newMonths };
       }),
       updateQuarter: (index, data) => set((state) => {
@@ -301,37 +319,92 @@ export const useAppStore = create<AppState>()(
         notes: data.notes || state.notes,
         settings: data.settings || state.settings
       })),
-      addNote: (note) => set((state) => ({
-        notes: [{ ...note, id: Math.random().toString(36).substring(2, 9), createdAt: Date.now() }, ...state.notes]
-      })),
-      toggleNote: (id) => set((state) => ({
-        notes: state.notes.map(n => n.id === id ? { ...n, isCompleted: !n.isCompleted } : n)
-      })),
-      deleteNote: (id) => set((state) => ({
-        notes: state.notes.filter(n => n.id !== id)
-      })),
-      addMemory: (memory) => set((state) => ({
-        memories: [{ ...memory, id: Math.random().toString(36).substring(2, 9), createdAt: Date.now() }, ...(state.memories || [])]
-      })),
-      deleteMemory: (id) => set((state) => ({
-        memories: (state.memories || []).filter(n => n.id !== id)
-      })),
-      setDailyTasks: (tasks, currentKpi) => set({
-        dailyTasks: tasks.map(t => ({
+      addNote: (note) => set((state) => {
+        const id = Math.random().toString(36).substring(2, 9);
+        const newNote = { ...note, id, createdAt: Date.now() };
+        
+        if (state.user) {
+          syncNoteToFirestore(state.user.uid, id, newNote);
+        }
+        
+        return { notes: [newNote, ...state.notes] };
+      }),
+      toggleNote: (id) => set((state) => {
+        const newNotes = state.notes.map(n => n.id === id ? { ...n, isCompleted: !n.isCompleted } : n);
+        const updated = newNotes.find(n => n.id === id);
+        
+        if (state.user && updated) {
+          syncNoteToFirestore(state.user.uid, id, updated);
+        }
+        
+        return { notes: newNotes };
+      }),
+      deleteNote: (id) => set((state) => {
+        if (state.user) {
+          deleteNoteFromFirestore(state.user.uid, id);
+        }
+        return { notes: state.notes.filter(n => n.id !== id) };
+      }),
+      addMemory: (memory) => set((state) => {
+        const id = Math.random().toString(36).substring(2, 9);
+        const newMemory = { ...memory, id, createdAt: Date.now() };
+        if (state.user) {
+          syncMemoryToFirestore(state.user.uid, id, newMemory);
+        }
+        return { memories: [newMemory, ...(state.memories || [])] };
+      }),
+      deleteMemory: (id) => set((state) => {
+        if (state.user) {
+          deleteMemoryFromFirestore(state.user.uid, id);
+        }
+        return { memories: (state.memories || []).filter(n => n.id !== id) };
+      }),
+      setDailyTasks: (tasks, currentKpi) => set((state) => {
+        const newTasks = tasks.map(t => ({
           ...t,
           id: Math.random().toString(36).substring(2, 9),
           createdAt: Date.now(),
           done: 0,
           isCompleted: false,
+          isStarted: false,
           kpiAtStart: currentKpi
-        }))
+        }));
+        
+        if (state.user) {
+          // Batch sync for setDailyTasks might be better, but let's do individual for now
+          newTasks.forEach(task => syncDailyTaskToFirestore(state.user!.uid, task.id, task));
+        }
+        
+        return { dailyTasks: newTasks };
       }),
-      toggleDailyTask: (id) => set((state) => ({
-        dailyTasks: state.dailyTasks.map(t => t.id === id ? { ...t, isCompleted: !t.isCompleted, done: !t.isCompleted ? (t.target || 0) : 0 } : t)
-      })),
-      updateDailyTaskProgress: (id, done) => set((state) => ({
-        dailyTasks: state.dailyTasks.map(t => t.id === id ? { ...t, done, isCompleted: t.target ? done >= t.target : t.isCompleted } : t)
-      })),
+      toggleDailyTask: (id) => set((state) => {
+        const newTasks = state.dailyTasks.map(t => t.id === id ? { ...t, isCompleted: !t.isCompleted, done: !t.isCompleted ? (t.target || 0) : 0, isStarted: !t.isCompleted } : t);
+        const updated = newTasks.find(t => t.id === id);
+        
+        if (state.user && updated) {
+          syncDailyTaskToFirestore(state.user.uid, id, updated);
+        }
+        
+        return { dailyTasks: newTasks };
+      }),
+      startDailyTask: (id) => set((state) => {
+        const newTasks = state.dailyTasks.map(t => t.id === id ? { ...t, isStarted: true } : t);
+        const updated = newTasks.find(t => t.id === id);
+        
+        if (state.user && updated) {
+          syncDailyTaskToFirestore(state.user.uid, id, updated);
+        }
+        
+        return { dailyTasks: newTasks };
+      }),
+      updateDailyTaskProgress: (id, done) => set((state) => {
+        const newTasks = state.dailyTasks.map(t => t.id === id ? { ...t, done, isCompleted: t.target ? done >= t.target : t.isCompleted, isStarted: true } : t);
+        const updated = newTasks.find(t => t.id === id);
+        if (state.user && updated) {
+          syncDailyTaskToFirestore(state.user.uid, id, updated);
+        }
+        return { dailyTasks: newTasks };
+      }),
       addDailySnapshot: (snapshot) => set((state) => ({
         dailySnapshots: [...state.dailySnapshots.filter(s => s.date !== snapshot.date), snapshot].slice(-60) // Keep 2 months
       })),
@@ -344,13 +417,21 @@ export const useAppStore = create<AppState>()(
       addStrategyLog: (log) => set((state) => ({
         strategyLogs: [{ ...log, id: Math.random().toString(36).substring(2, 9), timestamp: Date.now() }, ...state.strategyLogs].slice(0, 50)
       })),
-      updateUserProfile: (profile) => set((state) => ({
-        userProfile: { ...state.userProfile, ...profile }
-      })),
+      updateUserProfile: (profile) => set((state) => {
+        const newUserProfile = { ...state.userProfile, ...profile };
+        if (state.user) {
+          syncProfileToFirestore(state.user.uid, newUserProfile);
+        }
+        return { userProfile: newUserProfile };
+      }),
       setLastInsight: (lastInsight) => set({ lastInsight }),
-      updateSettings: (settings) => set((state) => ({
-        settings: { ...state.settings, ...settings }
-      }))
+      updateSettings: (settings) => set((state) => {
+        const newSettings = { ...state.settings, ...settings };
+        if (state.user) {
+          syncSettingsToFirestore(state.user.uid, newSettings);
+        }
+        return { settings: newSettings };
+      })
     }),
     {
       name: 'kpi-storage',

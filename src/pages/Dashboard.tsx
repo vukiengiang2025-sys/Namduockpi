@@ -1,4 +1,4 @@
-import { useAppStore } from '../store';
+import { useAppStore, DailyTask } from '../store';
 import { calc15DaysSalesKPI, calcCoverageKPI, calcSalesKPI, calcSKUKPI } from '../lib/kpi';
 import { formatPercent, cn } from '../lib/utils';
 import { motion, AnimatePresence } from 'motion/react';
@@ -7,7 +7,7 @@ import {
   CheckCircle2, Clock, FileSpreadsheet, AlertTriangle, Lightbulb, 
   Sparkles, Loader2, BrainCircuit, ChevronRight, X, PlusCircle, 
   Bookmark, History, Database, ShieldCheck, ArrowLeft,
-  ChevronDown, BarChart3, Zap
+  ChevronDown, BarChart3, Zap, ArrowUpRight
 } from 'lucide-react';
 import React, { useRef, useState, useMemo } from 'react';
 import * as XLSX from 'xlsx';
