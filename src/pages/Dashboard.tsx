@@ -21,6 +21,8 @@ import { CommandMetric } from '../components/CommandMetric';
 import { ActionCard } from '../components/ActionCard';
 
 
+import { saveFile } from '../lib/fileSystem';
+
 export default function Dashboard() {
   const { 
     months, selectedMonthIndex, setSelectedMonthIndex, settings,
@@ -102,30 +104,85 @@ export default function Dashboard() {
   };
 
   const handleExportExcel = () => {
-    const data = months.map((m, i) => ({
-      'Tháng': `Tháng ${i + 1}`,
-      'Mục tiêu Doanh số': m.salesTarget,
-      'Thực đạt Doanh số': m.salesActual,
-      'Tỷ lệ (%)': ((m.salesActual / (m.salesTarget || 1)) * 100).toFixed(1) + '%',
-      'Mục tiêu Bao phủ': m.coverageTarget,
-      'Thực đạt Bao phủ': m.coverageActual,
-      'SKU': m.skuActual,
-      'Điểm KPI': (calcSalesKPI(m.salesActual, m.salesTarget) + calcCoverageKPI(m.coverageActual, m.coverageTarget) + calcSKUKPI(m.skuActual)).toFixed(2)
-    }));
-    const ws = XLSX.utils.json_to_sheet(data);
+    // Export full year data
+    const kpiData = months.map((m, i) => {
+      const salesKPI = calcSalesKPI(m.salesActual, m.salesTarget);
+      const coverageKPI = calcCoverageKPI(m.coverageActual, m.coverageTarget);
+      const month15DaysKPI = calc15DaysSalesKPI(m.sales15DaysActual, m.salesTarget);
+      const skuKPI = calcSKUKPI(m.skuActual);
+      const totalKPI = salesKPI + coverageKPI + month15DaysKPI + skuKPI + (m.customPoints || 0);
+      
+      return {
+        'Tháng': `Tháng ${i + 1}`,
+        'Mục tiêu Doanh số': m.salesTarget,
+        'Thực đạt Doanh số': m.salesActual,
+        'Tỉ lệ Doanh số (%)': m.salesTarget ? ((m.salesActual / m.salesTarget) * 100).toFixed(1) : 0,
+        'Điểm Doanh số': salesKPI.toFixed(2),
+        'Mục tiêu Bao phủ': m.coverageTarget,
+        'Thực đạt Bao phủ': m.coverageActual,
+        'Điểm Bao phủ': coverageKPI.toFixed(2),
+        'Thực đạt SKU': m.skuActual,
+        'Điểm SKU': skuKPI.toFixed(2),
+        'Doanh số 15 Ngày': m.sales15DaysActual,
+        'Điểm 15 Ngày': month15DaysKPI.toFixed(2),
+        'Tên chỉ tiêu riêng': m.customName,
+        'Điểm riêng': m.customPoints,
+        'TỔNG ĐIỂM KPI': totalKPI.toFixed(2)
+      };
+    });
+
+    // Create workbook
     const wb = XLSX.utils.book_new();
-    XLSX.utils.book_append_sheet(wb, ws, "KPI_Report");
-    XLSX.writeFile(wb, `KPI_Bao_Cao_Nam_2024.xlsx`);
+    const ws = XLSX.utils.json_to_sheet(kpiData);
+    XLSX.utils.book_append_sheet(wb, ws, "Báo cáo Năm");
+
+    // Monthly Detail sheet for current month
+    const currentMonthDetail = [
+       { 'Hạng mục': 'Doanh số thực đạt', 'Giá trị': month.salesActual },
+       { 'Hạng mục': 'Mục tiêu tháng', 'Giá trị': month.salesTarget },
+       { 'Hạng mục': 'Tiến độ doanh số (%)', 'Giá trị': salesRatio.toFixed(1) + '%' },
+       { 'Hạng mục': 'Điểm doanh số', 'Giá trị': monthSalesKPI },
+       { 'Hạng mục': 'Bao phủ thực đạt', 'Giá trị': month.coverageActual },
+       { 'Hạng mục': 'Điểm bao phủ', 'Giá trị': monthCoverageKPI },
+       { 'Hạng mục': 'SKU Focus', 'Giá trị': month.skuActual },
+       { 'Hạng mục': 'Điểm SKU', 'Giá trị': monthSKUKPI },
+       { 'Hạng mục': 'TỔNG ĐIỂM KPI THÁNG', 'Giá trị': monthTotalKPI.toFixed(2) }
+    ];
+    const wsDetail = XLSX.utils.json_to_sheet(currentMonthDetail);
+    XLSX.utils.book_append_sheet(wb, wsDetail, `Chi tiết Tháng ${currentMonthIndex + 1}`);
+
+    // Notes/Memories sheet
+    const notesData = memories.map(m => ({
+      'Tiêu đề': m.title,
+      'Tóm tắt': m.summary,
+      'Ngày nạp': new Date(m.createdAt).toLocaleDateString('vi-VN'),
+      'Tags': m.tags?.join(', ')
+    }));
+    const wsNotes = XLSX.utils.json_to_sheet(notesData);
+    XLSX.utils.book_append_sheet(wb, wsNotes, "Ghi nhớ AI");
+
+    XLSX.writeFile(wb, `BaoCao_NamDuoc_T${currentMonthIndex + 1}_${new Date().toISOString().split('T')[0]}.xlsx`);
   };
 
-  const handleBackup = () => {
-    const data = useAppStore.getState();
-    const blob = new Blob([JSON.stringify(data)], { type: 'application/json' });
-    const url = URL.createObjectURL(blob);
-    const a = document.createElement('a');
-    a.href = url;
-    a.download = `namduoc_kpi_backup_${new Date().toISOString().slice(0,10)}.json`;
-    a.click();
+  const handleBackup = async () => {
+    const state = useAppStore.getState();
+    const data = {
+      months: state.months,
+      quarters: state.quarters,
+      halfYears: state.halfYears,
+      notes: state.notes,
+      memories: state.memories,
+      dailySnapshots: state.dailySnapshots,
+      weeklyReports: state.weeklyReports,
+      taskLogs: state.taskLogs,
+      strategyLogs: state.strategyLogs,
+      userProfile: state.userProfile,
+      settings: state.settings,
+      version: '1.0.0',
+      exportDate: new Date().toISOString()
+    };
+    const backupData = JSON.stringify(data, null, 2);
+    await saveFile(`namduoc_kpi_backup_${new Date().toISOString().split('T')[0]}.json`, backupData, 'application/json');
   };
 
   const handleImport = (e: React.ChangeEvent<HTMLInputElement>) => {
@@ -135,10 +192,15 @@ export default function Dashboard() {
     reader.onload = (e) => {
       try {
         const content = JSON.parse(e.target?.result as string);
-        useAppStore.setState(content);
-        alert('Đã khôi phục dữ liệu thành công!');
+        if (content.months && content.settings) {
+          useAppStore.getState().importData(content);
+          alert('Đã khôi phục dữ liệu thành công! Hệ thống sẽ tải lại.');
+          setTimeout(() => window.location.reload(), 1000);
+        } else {
+          alert('File backup không đúng định dạng!');
+        }
       } catch (err) {
-        alert('Lỗi cấu trúc tệp!');
+        alert('Lỗi đọc tệp backup!');
       }
     };
     reader.readAsText(file);

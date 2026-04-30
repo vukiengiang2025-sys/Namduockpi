@@ -1,7 +1,9 @@
 import { motion } from 'motion/react';
 import { useAppStore } from '../store';
-import { Settings as SettingsIcon, Key, Palette, Save, Type, Hexagon, Box, Target, Activity, LayoutDashboard, BarChart3, PieChart, Shapes, Sun, Moon, Type as TypeIcon, Image as ImageIcon, Sliders } from 'lucide-react';
+import { Settings as SettingsIcon, Key, Palette, Save, Type, Hexagon, Box, Target, Activity, LayoutDashboard, BarChart3, PieChart, Shapes, Sun, Moon, Type as TypeIcon, Image as ImageIcon, Sliders, Database, Download, Upload } from 'lucide-react';
 import { useState, useEffect } from 'react';
+
+import { saveFile } from '../lib/fileSystem';
 
 const THEMES = [
   { id: 'blue', name: 'Xanh dương', color: 'bg-blue-500' },
@@ -464,6 +466,77 @@ export default function Settings() {
               </div>
             </div>
           ))}
+        </div>
+      </motion.div>
+
+      {/* Data Management: Backup & Restore */}
+      <motion.div variants={itemVariants} className="bg-slate-900/40 rounded-3xl p-5 shadow-2xl border border-white/5 backdrop-blur-xl space-y-4">
+        <div className="flex items-center gap-2 mb-2">
+          <Database className="w-5 h-5 text-emerald-400" />
+          <h2 className="text-sm font-medium text-white">Quản lý Dữ liệu & Sao lưu</h2>
+        </div>
+        <p className="text-[10px] text-slate-500 leading-relaxed italic">
+          Xuất toàn bộ cấu hình, cài đặt và ký ức AI của bạn thành file JSON để sao lưu hoặc chuyển đổi thiết bị.
+        </p>
+        
+        <div className="grid grid-cols-2 gap-3">
+          <button
+            onClick={async () => {
+              const state = useAppStore.getState();
+              const backupData = JSON.stringify({
+                months: state.months,
+                quarters: state.quarters,
+                halfYears: state.halfYears,
+                notes: state.notes,
+                memories: state.memories,
+                dailySnapshots: state.dailySnapshots,
+                weeklyReports: state.weeklyReports,
+                taskLogs: state.taskLogs,
+                strategyLogs: state.strategyLogs,
+                userProfile: state.userProfile,
+                settings: state.settings,
+                version: '1.0.0',
+                exportDate: new Date().toISOString()
+              }, null, 2);
+              await saveFile(`namduoc_kpi_backup_${new Date().toISOString().split('T')[0]}.json`, backupData, 'application/json');
+            }}
+            className="flex flex-col items-center justify-center p-4 rounded-2xl border border-white/10 bg-white/5 hover:bg-emerald-500/10 hover:border-emerald-500/30 transition-all gap-2 group"
+          >
+            <Download className="w-6 h-6 text-emerald-500 group-hover:scale-110 transition-transform" />
+            <span className="text-xs font-bold text-white">Sao lưu (Backup)</span>
+          </button>
+
+          <label className="flex flex-col items-center justify-center p-4 rounded-2xl border border-white/10 bg-white/5 hover:bg-blue-500/10 hover:border-blue-500/30 transition-all gap-2 group cursor-pointer">
+            <Upload className="w-6 h-6 text-blue-500 group-hover:scale-110 transition-transform" />
+            <span className="text-xs font-bold text-white">Khôi phục (Restore)</span>
+            <input 
+              type="file" 
+              className="hidden" 
+              accept=".json"
+              onChange={(e) => {
+                const file = e.target.files?.[0];
+                if (!file) return;
+                const reader = new FileReader();
+                reader.onload = (event) => {
+                  try {
+                    const data = JSON.parse(event.target?.result as string);
+                    if (data.settings) {
+                      const store = useAppStore.getState();
+                      store.importData(data);
+                      alert('Khôi phục dữ liệu thành công! Hệ thống sẽ tải lại sau 1 giây.');
+                      setLocalSettings(data.settings);
+                      setTimeout(() => window.location.reload(), 1000);
+                    } else {
+                      alert('File không hợp lệ!');
+                    }
+                  } catch (err) {
+                    alert('Lỗi khi đọc file backup!');
+                  }
+                };
+                reader.readAsText(file);
+              }}
+            />
+          </label>
         </div>
       </motion.div>
 

@@ -301,7 +301,13 @@ export const useAppStore = create<AppState>()(
         quarters: data.quarters || state.quarters,
         halfYears: data.halfYears || state.halfYears,
         notes: data.notes || state.notes,
-        settings: data.settings || state.settings
+        memories: data.memories || state.memories,
+        settings: data.settings || state.settings,
+        dailySnapshots: data.dailySnapshots || state.dailySnapshots,
+        weeklyReports: data.weeklyReports || state.weeklyReports,
+        taskLogs: data.taskLogs || state.taskLogs,
+        strategyLogs: data.strategyLogs || state.strategyLogs,
+        userProfile: data.userProfile || state.userProfile
       })),
       addNote: (note) => set((state) => ({
         notes: [{ ...note, id: Math.random().toString(36).substring(2, 9), createdAt: Date.now() }, ...state.notes]
