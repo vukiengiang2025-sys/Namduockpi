@@ -33,7 +33,7 @@ export function CommandMetric({
     >
       {/* Subtle Background Glow */}
       <div className={cn(
-        "absolute -top-10 -right-10 w-24 h-24 blur-[80px] opacity-10 transition-opacity",
+        "absolute -top-10 -right-10 w-24 h-24 blur-[40px] opacity-10 transition-opacity pointer-events-none",
         status === 'danger' ? "bg-red-500" : status === 'warning' ? "bg-yellow-500" : "bg-emerald-500"
       )} />
 

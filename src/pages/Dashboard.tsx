@@ -167,11 +167,11 @@ export default function Dashboard() {
       variants={containerVariants}
       initial="initial"
       animate="animate"
-      className="pb-40 bg-transparent min-h-screen font-sans selection:bg-blue-500/30"
+      className="pb-40 bg-transparent min-h-screen font-sans selection:bg-blue-500/30 will-change-transform"
     >
       
       {/* MISSION CONTROL HEADER */}
-      <motion.div variants={itemVariants} className="sticky top-0 z-40 bg-slate-950/60 backdrop-blur-3xl border-b border-white/5 pt-8 pb-6 px-6">
+      <motion.div variants={itemVariants} className="sticky top-0 z-40 bg-slate-950/60 backdrop-blur-xl border-b border-white/5 pt-8 pb-6 px-6 will-change-transform">
         <div className="max-w-5xl mx-auto flex items-center justify-between">
            <div className="flex items-center gap-4">
               <div className="relative">
@@ -550,11 +550,11 @@ export default function Dashboard() {
         initial={{ y: 100 }}
         animate={{ y: 0 }}
         transition={{ delay: 1, type: 'spring', damping: 20 }}
-        className="fixed bottom-0 left-0 right-0 z-50 p-8 pt-0 pointer-events-none"
+        className="fixed bottom-0 left-0 right-0 z-50 p-8 pt-0 pointer-events-none will-change-transform"
       >
          <div className="max-w-xl mx-auto flex items-center justify-between pointer-events-auto">
             
-            <div className="flex bg-slate-900/80 backdrop-blur-3xl border border-white/10 p-2.5 rounded-full shadow-[0_30px_60px_rgba(0,0,0,0.5)] scale-90 sm:scale-100 relative group overflow-hidden">
+            <div className="flex bg-slate-900/80 backdrop-blur-xl border border-white/10 p-2.5 rounded-full shadow-[0_30px_60px_rgba(0,0,0,0.5)] scale-90 sm:scale-100 relative group overflow-hidden">
                <button onClick={() => setSelectedMonthIndex((currentMonthIndex - 1 + 12) % 12)} className="w-12 h-12 rounded-full flex items-center justify-center text-slate-400 hover:text-white transition-colors relative z-10 active:scale-90">
                   <ArrowLeft className="w-5 h-5" />
                </button>

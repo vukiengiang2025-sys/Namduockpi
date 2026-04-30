@@ -208,25 +208,30 @@ export async function chatWithContext(context: string, question: string): Promis
     }
 
     const ai = new GoogleGenAI({ apiKey });
-    const prompt = `Bạn là trợ lý thông minh của hệ thống NAMDUOC KPI. 
-Dựa vào ngữ cảnh dưới đây, hãy trả lời câu hỏi của người dùng một cách ngắn gọn, chính xác. 
-Ưu tiên trích dẫn các con số kpi, chiết khấu hoặc tên sản phẩm có trong tài liệu.
-Nếu thông tin không có trong tài liệu, hãy nói rõ là "Thông tin này không có trong tài liệu tôi đang đọc".
+    const prompt = `Bạn là "Cố vấn Trí tuệ Nam Dược" - Một hệ thống AI chuyên sâu về phân tích dữ liệu KPI và tài liệu doanh nghiệp.
+Nhiệm vụ: Dựa trên NGỮ CẢNH được cung cấp, hãy giải đáp câu hỏi của người dùng một cách chuyên nghiệp, chính xác và có tính hành động cao.
 
-NGỮ CẢNH:
+NGỮ CẢNH DỮ LIỆU ĐÃ NẠP:
 """
 ${context}
 """
 
-CÂU HỎI: "${question}"
+HƯỚNG DẪN TRẢ LỜI:
+1. Trích dẫn chính xác số liệu, tên sản phẩm hoặc mốc thời gian có trong tài liệu.
+2. Nếu câu hỏi yêu cầu tính toán hoặc so sánh dựa trên dữ liệu hiện có, hãy thực hiện nó một cách logic.
+3. Nếu thông tin KHÔNG có trong dữ liệu trên, hãy tế nhị nói rõ: "Dữ liệu hiện tại không đề cập đến vấn đề này, tôi chỉ có thể thông tin về [liệt kê nhanh các chủ đề chính có trong tài liệu]".
+4. Định dạng: Sử dụng Markdown (vạch đầu dòng, in đậm các con số quan trọng) để dễ đọc.
 
-TRẢ LỜI (ngắn gọn, tối đa 3 câu, trình bày chuyên nghiệp):`;
+CÂU HỎI CỦA NGƯỜI DÙNG: "${question}"
+
+TRẢ LỜI (ngôn ngữ tiếng Việt, ngắn gọn nhưng đầy đủ, chuyên nghiệp):`;
 
     const response = await ai.models.generateContent({
       model: state.settings.geminiModel || 'gemini-3-flash-preview',
       contents: prompt,
       config: {
-        temperature: 0.2,
+        temperature: 0.2, // Giữ độ chính xác cao
+        topP: 0.8,
       }
     });
 

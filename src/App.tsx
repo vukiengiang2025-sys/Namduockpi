@@ -40,9 +40,9 @@ export default function App() {
   const bgStyle = settings.bgUrl ? { backgroundImage: `url(${settings.bgUrl})`, backgroundSize: 'cover', backgroundPosition: 'center', backgroundAttachment: 'fixed' } : {};
 
   const pageVariants = {
-    initial: { opacity: 0, x: 20, filter: 'blur(10px)' },
-    animate: { opacity: 1, x: 0, filter: 'blur(0px)' },
-    exit: { opacity: 0, x: -20, filter: 'blur(10px)' }
+    initial: { opacity: 0, x: 10 },
+    animate: { opacity: 1, x: 0 },
+    exit: { opacity: 0, x: -10 }
   };
 
   const NavItem = ({ id, icon: Icon, label }: { id: typeof activeTab, icon: any, label: string }) => (
@@ -52,21 +52,21 @@ export default function App() {
         setIsSidebarOpen(false);
       }}
       className={cn(
-        "flex items-center gap-3 px-4 py-3 rounded-2xl transition-all duration-500 w-full group relative overflow-hidden",
+        "flex items-center gap-3 px-4 py-3 rounded-2xl transition-all duration-300 w-full group relative overflow-hidden",
         activeTab === id 
           ? `${theme.activeBg} text-white shadow-lg shadow-black/40` 
           : "text-slate-400 hover:text-white hover:bg-white/5"
       )}
     >
-      <Icon className={cn("w-5 h-5 transition-transform duration-500 group-hover:scale-110", activeTab === id ? "text-white" : theme.text)} />
+      <Icon className={cn("w-5 h-5 transition-transform duration-300 group-active:scale-90", activeTab === id ? "text-white" : theme.text)} />
       <span className="text-xs font-bold uppercase tracking-widest">{label}</span>
       {activeTab === id && (
-        <motion.div layoutId="active-pill" className="absolute right-2 w-1.5 h-1.5 bg-white rounded-full shadow-[0_0_8px_white]" />
+        <motion.div 
+          layoutId="active-pill" 
+          className="absolute right-2 w-1.5 h-1.5 bg-white rounded-full shadow-[0_0_8px_white]"
+          transition={{ type: "spring", stiffness: 300, damping: 30 }}
+        />
       )}
-      <motion.div 
-        whileTap={{ scale: 2, opacity: 0 }}
-        className="absolute inset-0 bg-white/20 pointer-events-none rounded-2xl opacity-0"
-      />
     </button>
   );
 
@@ -77,41 +77,32 @@ export default function App() {
         <div className="fixed inset-0 overflow-hidden pointer-events-none z-0">
           <motion.div 
             animate={{ 
-              scale: [1, 1.1, 1],
-              opacity: [0.3, 0.4, 0.3],
-              rotate: [0, 5, 0]
+              opacity: [0.2, 0.3, 0.2],
             }}
-            transition={{ duration: 15, repeat: Infinity, ease: "linear" }}
-            className={`absolute -top-[10%] -left-[10%] w-[60%] h-[60%] ${theme.bg} rounded-full blur-[140px] transition-colors duration-700`}
+            transition={{ duration: 10, repeat: Infinity, ease: "linear" }}
+            className={`absolute -top-[10%] -left-[10%] w-[60%] h-[60%] ${theme.bg} rounded-full blur-[100px] transition-colors duration-700`}
           />
           <motion.div 
             animate={{ 
-              scale: [1, 1.2, 1],
-              opacity: [0.3, 0.4, 0.3],
-              rotate: [0, -5, 0]
+              opacity: [0.2, 0.3, 0.2],
             }}
-            transition={{ duration: 20, repeat: Infinity, ease: "linear" }}
-            className={`absolute -bottom-[10%] -right-[10%] w-[60%] h-[60%] ${theme.bg} rounded-full blur-[140px] transition-colors duration-700`}
+            transition={{ duration: 15, repeat: Infinity, ease: "linear" }}
+            className={`absolute -bottom-[10%] -right-[10%] w-[60%] h-[60%] ${theme.bg} rounded-full blur-[100px] transition-colors duration-700`}
           />
         </div>
       )}
 
       {/* Sidebar Desktop */}
       <aside className="hidden lg:flex flex-col w-64 bg-slate-900/40 backdrop-blur-3xl border-r border-white/5 p-6 sticky top-0 h-screen z-50">
-        <motion.div 
-          initial={{ opacity: 0, x: -20 }}
-          animate={{ opacity: 1, x: 0 }}
-          className="flex items-center gap-3 mb-10 px-2"
-        >
+        <div className="flex items-center justify-between mb-10 px-2">
           <div className={cn("w-10 h-10 rounded-2xl flex items-center justify-center shadow-2xl relative group", theme.bg)}>
              <BarChart3 className={cn("w-6 h-6 z-10", theme.text)} />
-             <div className="absolute inset-0 bg-white/10 rounded-2xl blur-lg opacity-0 group-hover:opacity-100 transition-opacity" />
           </div>
           <div>
             <h1 className="text-sm font-black text-white uppercase tracking-tighter leading-none">{settings.appTitle || 'KPI AI'}</h1>
             <p className="text-[10px] text-slate-500 font-bold uppercase tracking-widest mt-1">Personal Edition</p>
           </div>
-        </motion.div>
+        </div>
 
         <nav className="flex-1 space-y-2">
           <NavItem id="dashboard" icon={LayoutDashboard} label="Bàn làm việc" />

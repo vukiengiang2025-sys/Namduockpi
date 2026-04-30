@@ -30,12 +30,20 @@ export default function Notes() {
   const [selectedFile, setSelectedFile] = useState<File | null>(null);
   const [parsedContext, setParsedContext] = useState<string>('');
   const fileInputRef = useRef<HTMLInputElement>(null);
+  const chatScrollRef = useRef<HTMLDivElement>(null);
 
-  // Quick Chat State
-  const [quickQuestion, setQuickQuestion] = useState('');
-  const [quickAnswer, setQuickAnswer] = useState('');
+  // Advanced Chat State
+  const [chatMessages, setChatMessages] = useState<{role: 'user' | 'ai', content: string}[]>([]);
+  const [chatInput, setChatInput] = useState('');
   const [isAsking, setIsAsking] = useState(false);
-  const [showChat, setShowChat] = useState(false);
+  const [showFullChat, setShowFullChat] = useState(false);
+
+  // Auto scroll chat
+  useEffect(() => {
+    if (chatScrollRef.current) {
+      chatScrollRef.current.scrollTop = chatScrollRef.current.scrollHeight;
+    }
+  }, [chatMessages]);
 
   // Request permissions on init
   useEffect(() => {
@@ -100,33 +108,27 @@ export default function Notes() {
   const handleFileChange = async (e: React.ChangeEvent<HTMLInputElement>) => {
     if (e.target.files && e.target.files[0]) {
       const file = e.target.files[0];
-      setSelectedFile(file);
-      setIsParsing(true);
-      setParsedContext('');
-      setQuickAnswer('');
-      setShowChat(false);
-      try {
-        const text = await parseFile(file);
-        setParsedContext(text);
-      } catch (err: any) {
-        alert("Lỗi khi đọc file: " + err.message);
-        setSelectedFile(null);
-      } finally {
-        setIsParsing(false);
-      }
+      await processFile(file);
     }
   };
 
   const handleQuickChat = async () => {
-    const context = (newMemoryText + "\n" + parsedContext).trim();
-    if (!context || !quickQuestion.trim()) return;
-
+    if (!chatInput.trim()) return;
+    
+    // Build knowledge base context from all memories + current parsed file
+    const memoryContext = memories.map(m => `${m.title}: ${m.summary}`).join('\n');
+    const fullContext = `DỮ LIỆU CỦA NGƯỜI DÙNG ĐÃ NẠP:\n${memoryContext}\n\nTÀI LIỆU HIỆN TẠI ĐANG XEM:\n${parsedContext}\n\nLưu ý: Chỉ trả lời dựa trên dữ liệu trên. Nếu không rõ, hãy nói dữ liệu chưa được nạp.`;
+    
+    const userMsg = chatInput;
+    setChatMessages(prev => [...prev, { role: 'user', content: userMsg }]);
+    setChatInput('');
     setIsAsking(true);
+    
     try {
-      const answer = await chatWithContext(context, quickQuestion);
-      setQuickAnswer(answer);
+      const answer = await chatWithContext(fullContext, userMsg);
+      setChatMessages(prev => [...prev, { role: 'ai', content: answer }]);
     } catch (err: any) {
-      alert(err.message);
+      setChatMessages(prev => [...prev, { role: 'ai', content: `Lỗi: ${err.message}` }]);
     } finally {
       setIsAsking(false);
     }
@@ -143,9 +145,9 @@ export default function Notes() {
       setNewMemoryText('');
       setSelectedFile(null);
       setParsedContext('');
-      setQuickAnswer('');
-      setQuickQuestion('');
-      setShowChat(false);
+      setChatMessages([]);
+      setChatInput('');
+      setShowFullChat(false);
       if (fileInputRef.current) fileInputRef.current.value = '';
       alert('Đã tóm tắt và lưu Ký ức thành công!');
     } catch (error: any) {
@@ -191,6 +193,48 @@ export default function Notes() {
       case 'meeting': return '#Họp';
       case 'other': return '#Khác';
       default: return '';
+    }
+  };
+
+  const handleDragOver = (e: React.DragEvent) => {
+    e.preventDefault();
+    e.stopPropagation();
+  };
+
+  const handleDrop = async (e: React.DragEvent) => {
+    e.preventDefault();
+    e.stopPropagation();
+    if (e.dataTransfer.files && e.dataTransfer.files[0]) {
+      const file = e.dataTransfer.files[0];
+      const validTypes = ['.pdf', '.docx', '.xlsx', '.xls', '.txt'];
+      const fileExt = file.name.substring(file.name.lastIndexOf('.')).toLowerCase();
+      
+      if (!validTypes.includes(fileExt)) {
+        alert("Định dạng file không hỗ trợ!");
+        return;
+      }
+
+      await processFile(file);
+    }
+  };
+
+  const processFile = async (file: File) => {
+    setSelectedFile(file);
+    setIsParsing(true);
+    setParsedContext('');
+    setChatMessages([]);
+    setShowFullChat(false);
+    try {
+      const text = await parseFile(file);
+      setParsedContext(text);
+      // Automatically open chat when file is ready
+      setShowFullChat(true);
+      setChatMessages([{ role: 'ai', content: `Tôi đã đọc xong file **${file.name}**. Bạn cần tôi giúp gì về tài liệu này không?` }]);
+    } catch (err: any) {
+      alert("Lỗi khi đọc file: " + err.message);
+      setSelectedFile(null);
+    } finally {
+      setIsParsing(false);
     }
   };
 
@@ -316,34 +360,40 @@ export default function Notes() {
       {activeTab === 'memories' && (
         <motion.div initial={{opacity: 0, y: 10}} animate={{opacity:1, y:0}} className="space-y-6">
           <div className="bg-slate-900/40 rounded-3xl p-5 border border-white/5 backdrop-blur-xl">
-             <div className="flex items-center justify-between mb-4">
+              <div className="flex items-center justify-between mb-4">
                 <h2 className="text-sm font-bold text-white uppercase tracking-widest flex items-center gap-2">
                   <BrainCircuit className="w-4 h-4 text-purple-400" /> Nạp Trí Thức
                 </h2>
-                {parsedContext && (
-                  <button onClick={() => setShowChat(!showChat)} className="text-[10px] font-bold text-purple-400 hover:underline flex items-center gap-1">
-                    <MessageSquare className="w-3 h-3" /> {showChat ? 'Đóng hỏi nhanh' : 'Hỏi nhanh tài liệu'}
-                  </button>
-                )}
+                <button 
+                  onClick={() => setShowFullChat(!showFullChat)} 
+                  className={cn(
+                    "text-[10px] font-bold px-3 py-1 rounded-full transition-all flex items-center gap-1.5",
+                    showFullChat ? "bg-purple-500 text-white shadow-lg" : "bg-white/5 text-purple-400 hover:bg-white/10"
+                  )}
+                >
+                  <MessageSquare className="w-3 h-3" /> {showFullChat ? 'Đóng hội thoại' : 'Chat với Trí thức'}
+                </button>
              </div>
 
              <div className="space-y-4">
                 <div 
                   onClick={() => fileInputRef.current?.click()}
+                  onDragOver={handleDragOver}
+                  onDrop={handleDrop}
                   className={cn(
-                    "border-2 border-dashed rounded-3xl p-8 transition-all cursor-pointer flex flex-col items-center justify-center gap-3",
+                    "border-2 border-dashed rounded-3xl p-8 transition-all cursor-pointer flex flex-col items-center justify-center gap-3 relative group",
                     isParsing ? "border-yellow-500/50 bg-yellow-500/5" : 
                     selectedFile ? "border-purple-500/50 bg-purple-500/5" : 
                     "border-white/10 hover:border-purple-500/30 hover:bg-white/5"
                   )}
                 >
-                  <input type="file" ref={fileInputRef} onChange={handleFileChange} accept=".pdf,.docx,.xlsx,.xls,.txt" className="hidden" />
+                  <input type="file" ref={fileInputRef} onChange={(e) => e.target.files?.[0] && processFile(e.target.files[0])} accept=".pdf,.docx,.xlsx,.xls,.txt" className="hidden" />
                   
                   {isParsing ? (
                     <>
-                      <Loader2 className="w-8 h-8 text-yellow-500 animate-spin" />
-                      <p className="text-sm font-bold text-yellow-500">Đang đọc tài liệu...</p>
-                      <p className="text-[10px] text-slate-500 text-center">Chúng tôi đang trích xuất dữ liệu để nạp vào bộ não AI</p>
+                      <Loader2 className="w-10 h-10 text-yellow-500 animate-spin" />
+                      <p className="text-sm font-bold text-yellow-500 animate-pulse">Đang giải mã dữ liệu...</p>
+                      <p className="text-[10px] text-slate-500 text-center">Nền tảng đang trích xuất văn bản & dữ liệu từ tệp</p>
                     </>
                   ) : selectedFile ? (
                     <div className="flex items-center gap-4 w-full">
@@ -352,55 +402,89 @@ export default function Notes() {
                        </div>
                        <div className="flex-1 min-w-0">
                           <p className="text-sm font-bold text-white truncate">{selectedFile.name}</p>
-                          <p className="text-[10px] text-slate-500 font-bold uppercase">{(selectedFile.size / 1024).toFixed(1)} KB • Sẵn sàng nạp</p>
+                          <p className="text-[10px] text-emerald-400 font-bold uppercase">Sẵn sàng phân tích • {(selectedFile.size / 1024).toFixed(1)} KB</p>
                        </div>
-                       <button onClick={(e) => { e.stopPropagation(); setSelectedFile(null); setParsedContext(''); }} className="p-2 hover:bg-white/10 rounded-xl text-slate-500"><X className="w-4 h-4" /></button>
+                       <button onClick={(e) => { e.stopPropagation(); setSelectedFile(null); setParsedContext(''); setChatMessages([]); }} className="p-2 hover:bg-white/10 rounded-xl text-slate-500"><X className="w-4 h-4" /></button>
                     </div>
                   ) : (
                     <>
-                       <div className="w-14 h-14 bg-white/5 rounded-3xl flex items-center justify-center text-slate-500 shadow-inner">
-                          <FileUp className="w-7 h-7" />
+                       <div className="w-16 h-16 bg-white/5 rounded-[2rem] flex items-center justify-center text-slate-500 shadow-inner group-hover:scale-110 group-hover:text-purple-400 transition-all">
+                          <FileUp className="w-8 h-8" />
                        </div>
                        <div className="text-center">
-                          <p className="text-sm font-bold text-white">Thả tài liệu vào đây</p>
-                          <p className="text-[10px] text-slate-500 mt-1 uppercase font-bold tracking-tighter">Hỗ trợ PDF, EXCEL, DOCX (Max 10MB)</p>
+                          <p className="text-sm font-bold text-white">Thả tệp tin hoặc Click chọn</p>
+                          <p className="text-[10px] text-slate-500 mt-1 uppercase font-black tracking-widest opacity-60">PDF, Excel, Docx, Text (Max 20MB)</p>
                        </div>
                     </>
                   )}
                 </div>
 
                 <AnimatePresence>
-                  {showChat && parsedContext && (
+                  {showFullChat && (
                     <motion.div 
                       initial={{ height: 0, opacity: 0 }} animate={{ height: 'auto', opacity: 1 }} exit={{ height: 0, opacity: 0 }}
-                      className="bg-slate-950/50 rounded-2xl p-4 border border-purple-500/20 overflow-hidden"
+                      className="bg-slate-950/80 rounded-[2.5rem] border border-white/10 overflow-hidden flex flex-col shadow-2xl backdrop-blur-2xl"
                     >
-                       <p className="text-[10px] font-black text-purple-400 uppercase mb-3 flex items-center gap-2">
-                        <Sparkles className="w-3 h-3" /> Truy xuất thông tin nhanh
-                       </p>
-                       <div className="space-y-4">
-                          {quickAnswer && (
-                            <div className="bg-purple-500/10 p-3 rounded-xl border border-white/5">
-                               <p className="text-[11px] text-slate-300 italic leading-relaxed">"{quickAnswer}"</p>
+                       <div className="p-4 border-b border-white/5 bg-white/5 flex items-center justify-between">
+                          <div className="flex items-center gap-2">
+                            <div className="w-2 h-2 bg-emerald-500 rounded-full animate-pulse"></div>
+                            <span className="text-[10px] font-black text-white uppercase tracking-widest">Knowledge Assistant</span>
+                          </div>
+                          <button onClick={() => setChatMessages([])} className="text-[9px] text-slate-500 font-bold hover:text-white uppercase flex items-center gap-1">
+                            <RefreshCcw className="w-3 h-3" /> Xóa hội thoại
+                          </button>
+                       </div>
+
+                       <div ref={chatScrollRef} className="max-h-[300px] overflow-y-auto p-4 space-y-4 font-sans custom-scrollbar">
+                          {chatMessages.length === 0 && (
+                            <div className="py-10 text-center">
+                               <p className="text-xs text-slate-500 italic">Đặt câu hỏi để tìm kiếm thông tin trong dữ liệu đã nạp...</p>
                             </div>
                           )}
+                          {chatMessages.map((msg, i) => (
+                            <div key={i} className={cn("flex", msg.role === 'user' ? "justify-end" : "justify-start")}>
+                               <div className={cn(
+                                 "max-w-[85%] px-4 py-2.5 rounded-2xl text-[11px] leading-relaxed",
+                                 msg.role === 'user' 
+                                   ? "bg-purple-600 text-white rounded-tr-none shadow-lg shadow-purple-900/20" 
+                                   : "bg-slate-800 text-slate-200 rounded-tl-none border border-white/5"
+                               )}>
+                                  {msg.content}
+                               </div>
+                            </div>
+                          ))}
+                          {isAsking && (
+                            <div className="flex justify-start">
+                               <div className="bg-slate-900 px-4 py-2 rounded-2xl rounded-tl-none border border-white/5">
+                                  <Loader2 className="w-3 h-3 text-purple-400 animate-spin" />
+                               </div>
+                            </div>
+                          )}
+                       </div>
+
+                       <div className="p-3 bg-slate-900/50 border-t border-white/5">
                           <div className="flex gap-2">
                              <input 
                               type="text" 
-                              placeholder="Hỏi bất cứ điều gì về tài liệu này..." 
-                              value={quickQuestion}
-                              onChange={(e) => setQuickQuestion(e.target.value)}
+                              placeholder="Hỏi về tệp hoặc ký ức..." 
+                              value={chatInput}
+                              onChange={(e) => setChatInput(e.target.value)}
                               onKeyDown={(e) => e.key === 'Enter' && handleQuickChat()}
-                              className="flex-1 bg-slate-900 border border-white/10 rounded-xl px-3 py-2 text-xs text-white outline-none focus:ring-1 focus:ring-purple-500"
+                              className="flex-1 bg-slate-950 border border-white/10 rounded-2xl px-4 py-2.5 text-xs text-white outline-none focus:ring-1 focus:ring-purple-500 shadow-inner"
                              />
                              <button 
                                onClick={handleQuickChat}
-                               disabled={isAsking || !quickQuestion.trim()}
-                               className="p-2 bg-purple-500 text-white rounded-xl hover:bg-purple-400 disabled:opacity-50 transition-all shadow-lg"
+                               disabled={isAsking || !chatInput.trim()}
+                               className="p-2.5 bg-purple-600 text-white rounded-2xl hover:bg-purple-500 disabled:opacity-50 transition-all shadow-lg hover:scale-105 active:scale-95"
                              >
-                               {isAsking ? <Loader2 className="w-4 h-4 animate-spin" /> : <Send className="w-4 h-4" />}
+                               <Send className="w-4 h-4" />
                              </button>
                           </div>
+                          {parsedContext && (
+                            <p className="text-[8px] text-slate-600 mt-2 text-center uppercase font-bold tracking-widest">
+                              Đang tập trung vào: {selectedFile?.name || 'Văn bản nạp'}
+                            </p>
+                          )}
                        </div>
                     </motion.div>
                   )}
@@ -474,7 +558,7 @@ export default function Notes() {
                               <div className="flex justify-between items-center pt-2">
                                 <p className="text-[8px] text-slate-600 italic">Nạp ngày {new Date(mem.createdAt).toLocaleDateString('vi-VN')}</p>
                                 <button 
-                                  onClick={() => { setQuickQuestion(`Giải thích thêm về ${mem.title}`); setShowChat(true); window.scrollTo({top:0, behavior:'smooth'}); }}
+                                  onClick={() => { setChatInput(`Giải thích thêm về ${mem.title}`); setShowFullChat(true); window.scrollTo({top:0, behavior:'smooth'}); }}
                                   className="text-[10px] text-purple-400 font-bold flex items-center gap-1"
                                 >
                                   <MessageSquare className="w-3 h-3" /> Truy vấn thêm
