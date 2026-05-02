@@ -29,10 +29,8 @@ export default function Dashboard() {
     dailyTasks, setDailyTasks, toggleDailyTask, lastInsight, setLastInsight, memories
   } = useAppStore();
   
-  const fileInputRef = useRef<HTMLInputElement>(null);
   const [isAnalyzing, setIsAnalyzing] = useState(false);
   const [isDataEntryOpen, setIsDataEntryOpen] = useState(false);
-  const [isMemoryOpen, setIsMemoryOpen] = useState(false);
 
   const realCurrentMonthIndex = new Date().getMonth();
   const currentMonthIndex = selectedMonthIndex;
@@ -162,48 +160,6 @@ export default function Dashboard() {
     XLSX.utils.book_append_sheet(wb, wsNotes, "Ghi nhớ AI");
 
     XLSX.writeFile(wb, `BaoCao_NamDuoc_T${currentMonthIndex + 1}_${new Date().toISOString().split('T')[0]}.xlsx`);
-  };
-
-  const handleBackup = async () => {
-    const state = useAppStore.getState();
-    const data = {
-      months: state.months,
-      quarters: state.quarters,
-      halfYears: state.halfYears,
-      notes: state.notes,
-      memories: state.memories,
-      dailySnapshots: state.dailySnapshots,
-      weeklyReports: state.weeklyReports,
-      taskLogs: state.taskLogs,
-      strategyLogs: state.strategyLogs,
-      userProfile: state.userProfile,
-      settings: state.settings,
-      version: '1.0.0',
-      exportDate: new Date().toISOString()
-    };
-    const backupData = JSON.stringify(data, null, 2);
-    await saveFile(`namduoc_kpi_backup_${new Date().toISOString().split('T')[0]}.json`, backupData, 'application/json');
-  };
-
-  const handleImport = (e: React.ChangeEvent<HTMLInputElement>) => {
-    const file = e.target.files?.[0];
-    if (!file) return;
-    const reader = new FileReader();
-    reader.onload = (e) => {
-      try {
-        const content = JSON.parse(e.target?.result as string);
-        if (content.months && content.settings) {
-          useAppStore.getState().importData(content);
-          alert('Đã khôi phục dữ liệu thành công! Hệ thống sẽ tải lại.');
-          setTimeout(() => window.location.reload(), 1000);
-        } else {
-          alert('File backup không đúng định dạng!');
-        }
-      } catch (err) {
-        alert('Lỗi đọc tệp backup!');
-      }
-    };
-    reader.readAsText(file);
   };
 
   const AppIconNode = APP_ICONS.find(i => i.id === settings.appIcon)?.icon || APP_ICONS[0].icon;
@@ -477,6 +433,58 @@ export default function Dashboard() {
                      </motion.p>
                    </AnimatePresence>
                    
+                   {/* AI PREDICTIVE COMPONENT */}
+                   {lastInsight?.prediction && (
+                     <motion.div 
+                       initial={{ opacity: 0, y: 10 }}
+                       animate={{ opacity: 1, y: 0 }}
+                       className="bg-blue-500/10 border border-blue-500/20 rounded-[2rem] p-6 mb-8 relative overflow-hidden group/forecast shadow-xl shadow-blue-500/5"
+                     >
+                       <div className="flex items-center justify-between mb-4">
+                          <div className="flex items-center gap-2">
+                             <Sparkles className="w-4 h-4 text-blue-400" />
+                             <span className="text-[10px] font-black text-blue-400 uppercase tracking-widest">Dự báo thông minh</span>
+                          </div>
+                          <div className="flex items-center gap-1.5 px-2.5 py-1 bg-blue-500/20 rounded-full">
+                             <div className={cn(
+                               "w-1.5 h-1.5 rounded-full animate-pulse",
+                               lastInsight.prediction.trend === 'up' ? "bg-emerald-500" : lastInsight.prediction.trend === 'down' ? "bg-red-500" : "bg-blue-500"
+                             )} />
+                             <span className="text-[9px] font-bold text-blue-300 uppercase leading-none">{lastInsight.prediction.trend === 'up' ? 'Xu hướng tăng' : lastInsight.prediction.trend === 'down' ? 'Xu hướng giảm' : 'Ổn định'}</span>
+                          </div>
+                       </div>
+                       
+                       <div className="grid grid-cols-2 gap-3 mb-4">
+                          <div className="p-4 bg-slate-950/40 rounded-2xl border border-white/5">
+                             <p className="text-[8px] text-slate-500 uppercase font-bold tracking-widest mb-1">Dự kiến kết thúc</p>
+                             <div className="flex items-baseline gap-1">
+                               <p className="text-2xl font-black text-white font-mono tracking-tighter">
+                                 {lastInsight.prediction.estimatedFinish.toFixed(1)}
+                               </p>
+                               <span className="text-[10px] text-slate-500 font-bold">%</span>
+                             </div>
+                          </div>
+                          <div className="p-4 bg-slate-950/40 rounded-2xl border border-white/5">
+                             <p className="text-[8px] text-slate-500 uppercase font-bold tracking-widest mb-1">Khoảng cách hụt</p>
+                             <div className="flex items-baseline gap-1">
+                               <p className="text-2xl font-black text-red-500 font-mono tracking-tighter">
+                                 {lastInsight.prediction.gapToGoal.toFixed(1)}
+                               </p>
+                               <span className="text-[10px] text-red-500/50 font-bold">%</span>
+                             </div>
+                          </div>
+                       </div>
+                       
+                       <p className="text-xs font-medium text-blue-200/80 italic leading-relaxed relative z-10">
+                         "{lastInsight.prediction.message}"
+                       </p>
+                       
+                       <div className="absolute -bottom-4 -right-4 opacity-5 group-hover/forecast:rotate-12 group-hover/forecast:scale-125 transition-all duration-700">
+                          <TrendingUp className="w-24 h-24 text-blue-400" />
+                       </div>
+                     </motion.div>
+                   )}
+                   
                    {lastInsight?.riskAlert && (
                      <motion.div 
                        initial={{ x: -20, opacity: 0 }}
@@ -508,24 +516,22 @@ export default function Dashboard() {
 
               <motion.section 
                 whileHover={{ scale: 1.01, backgroundColor: "rgba(15,23,42,0.6)" }}
-                whileTap={{ scale: 0.99 }}
-                onClick={() => setIsMemoryOpen(true)}
-                className="group p-8 bg-slate-900/40 rounded-[3rem] border border-white/5 border-dashed cursor-pointer transition-all"
+                className="group p-8 bg-slate-900/40 rounded-[3rem] border border-white/5 border-dashed transition-all relative overflow-hidden"
               >
                   <div className="flex items-center justify-between">
                     <div className="flex items-center gap-5">
-                       <div className="p-4 bg-purple-500/10 rounded-2xl text-purple-400 group-hover:scale-110 group-hover:rotate-6 transition-all duration-500">
-                         <BrainCircuit className="w-7 h-7" />
+                       <div className="p-4 bg-purple-500/10 rounded-2xl text-purple-400 group-hover:scale-110 transition-all duration-500">
+                          <BrainCircuit className="w-7 h-7" />
                        </div>
                        <div>
                           <h3 className="text-white font-black uppercase text-xs tracking-widest">Archives & Memory</h3>
-                          <p className="text-[9px] text-slate-500 font-bold uppercase tracking-widest">{memories.length} bản ghi trong bộ nhớ</p>
+                          <p className="text-[9px] text-slate-500 font-bold uppercase tracking-widest">{memories.length} bản ghi trong hệ thống</p>
                        </div>
                     </div>
-                    <ChevronRight className="w-6 h-6 text-slate-700 group-hover:text-purple-400 group-hover:translate-x-2 transition-all duration-300" />
+                    <ChevronRight className="w-5 h-5 text-slate-700 group-hover:text-purple-400 group-hover:translate-x-2 transition-all" />
                   </div>
               </motion.section>
-           </motion.div>
+            </motion.div>
 
            <motion.div variants={itemVariants} className="lg:col-span-4 space-y-8">
               <section className="bg-slate-900/40 rounded-[2.5rem] border border-white/5 p-8 backdrop-blur-3xl shadow-2xl relative overflow-hidden">
@@ -568,7 +574,7 @@ export default function Dashboard() {
 
               <section className="bg-slate-900/40 rounded-[2.5rem] border border-white/5 p-8 group">
                  <h3 className="text-[10px] text-slate-500 font-black uppercase tracking-[0.2em] mb-6 flex items-center gap-2">
-                    <Database className="w-4 h-4 group-hover:text-blue-400 transition-colors" /> Cơ sở dữ liệu
+                    <Database className="w-4 h-4 group-hover:text-blue-400 transition-colors" /> Tổng hợp dữ liệu
                  </h3>
                  <div className="flex flex-col gap-3">
                     <motion.button 
@@ -577,31 +583,10 @@ export default function Dashboard() {
                        onClick={handleExportExcel}
                        className="flex items-center justify-between w-full px-5 py-5 bg-emerald-500/5 hover:bg-emerald-500/10 text-emerald-400 rounded-2xl border border-emerald-500/20 transition-all text-[9.5px] font-black uppercase tracking-[0.15em] shadow-lg shadow-emerald-950/20"
                     >
-                      <span className="flex items-center gap-3"><FileSpreadsheet className="w-4.5 h-4.5" /> Báo cáo Excel</span>
+                      <span className="flex items-center gap-3"><FileSpreadsheet className="w-4.5 h-4.5" /> Xuất Báo cáo Excel Năm</span>
                       <ChevronRight className="w-4 h-4 opacity-50" />
                     </motion.button>
-                    <div className="grid grid-cols-2 gap-3">
-                       <motion.button 
-                         whileHover={{ y: -2, backgroundColor: "rgba(255,255,255,0.08)" }}
-                         whileTap={{ scale: 0.95 }}
-                         onClick={handleBackup} 
-                         className="py-4 bg-white/5 rounded-2xl border border-white/5 flex flex-col items-center justify-center transition-all"
-                       >
-                          <Download className="w-4 h-4 mb-2 text-slate-500" />
-                          <span className="text-[7px] font-black text-slate-500 uppercase tracking-widest">Backup</span>
-                       </motion.button>
-                       <motion.button 
-                         whileHover={{ y: -2, backgroundColor: "rgba(255,255,255,0.08)" }}
-                         whileTap={{ scale: 0.95 }}
-                         onClick={() => fileInputRef.current?.click()} 
-                         className="py-4 bg-white/5 rounded-2xl border border-white/5 flex flex-col items-center justify-center transition-all"
-                       >
-                          <Upload className="w-4 h-4 mb-2 text-slate-500" />
-                          <span className="text-[7px] font-black text-slate-500 uppercase tracking-widest">Restore</span>
-                       </motion.button>
-                    </div>
                  </div>
-                 <input type="file" accept=".json" className="hidden" ref={fileInputRef} onChange={handleImport} />
               </section>
            </motion.div>
         </div>
@@ -614,47 +599,17 @@ export default function Dashboard() {
         transition={{ delay: 1, type: 'spring', damping: 20 }}
         className="fixed bottom-0 left-0 right-0 z-50 p-8 pt-0 pointer-events-none will-change-transform"
       >
-         <div className="max-w-xl mx-auto flex items-center justify-between pointer-events-auto">
+         <div className="max-w-xl mx-auto flex items-center justify-end pointer-events-auto">
             
-            <div className="flex bg-slate-900/80 backdrop-blur-xl border border-white/10 p-2.5 rounded-full shadow-[0_30px_60px_rgba(0,0,0,0.5)] scale-90 sm:scale-100 relative group overflow-hidden">
-               <button onClick={() => setSelectedMonthIndex((currentMonthIndex - 1 + 12) % 12)} className="w-12 h-12 rounded-full flex items-center justify-center text-slate-400 hover:text-white transition-colors relative z-10 active:scale-90">
-                  <ArrowLeft className="w-5 h-5" />
-               </button>
-               <div className="w-px h-8 self-center bg-white/10 relative z-10" />
-               <motion.button 
-                  whileHover={{ scale: 1.1 }}
-                  whileTap={{ scale: 0.9 }}
-                  onClick={() => setIsMemoryOpen(true)}
-                  className={cn(
-                    "w-12 h-12 rounded-full flex items-center justify-center transition-all relative z-10",
-                    isMemoryOpen ? "text-purple-400" : "text-slate-400 hover:text-white"
-                  )}
-                >
-                  <BrainCircuit className="w-5 h-5" />
-               </motion.button>
-               <motion.button 
-                  whileHover={{ scale: 1.1 }}
-                  whileTap={{ scale: 0.9 }}
-                  onClick={() => setIsDataEntryOpen(true)}
-                  className={cn(
-                    "w-12 h-12 rounded-full flex items-center justify-center transition-all relative z-10",
-                    isDataEntryOpen ? "text-blue-400" : "text-slate-400 hover:text-white"
-                  )}
-                >
-                  <Database className="w-5 h-5" />
-               </motion.button>
-               <div className="absolute inset-0 bg-white/5 opacity-0 group-hover:opacity-100 transition-opacity" />
-            </div>
-
             <div className="flex items-center gap-4">
                <motion.button 
-                 whileHover={{ scale: 1.05, boxShadow: "0 20px 40px rgba(255,255,255,0.15)" }}
+                 whileHover={{ scale: 1.05, boxShadow: "0 20px 40px rgba(59, 130, 246, 0.2)" }}
                  whileTap={{ scale: 0.95 }}
                  onClick={() => setIsDataEntryOpen(true)}
-                 className="h-16 px-8 bg-white text-slate-950 font-black text-[11px] uppercase tracking-[0.2em] rounded-full shadow-2xl active:scale-95 transition-all flex items-center gap-3"
+                 className="h-16 px-8 bg-blue-600 text-white font-black text-[11px] uppercase tracking-[0.2em] rounded-full shadow-2xl active:scale-95 transition-all flex items-center gap-3"
                >
                   <PlusCircle className="w-5 h-5" />
-                  <span className="hidden sm:inline">Check-in</span>
+                  <span className="hidden sm:inline">Cập nhật thực tế</span>
                </motion.button>
 
                <motion.button 
@@ -664,10 +619,10 @@ export default function Dashboard() {
                  disabled={isAnalyzing}
                  className={cn(
                    "w-16 h-16 rounded-full flex items-center justify-center transition-all relative overflow-hidden shadow-2xl shadow-blue-500/40",
-                   isAnalyzing ? "bg-slate-800" : "bg-blue-600"
+                   isAnalyzing ? "bg-slate-800" : "bg-white text-blue-600"
                  )}
                >
-                  <div className="absolute inset-0 bg-gradient-to-tr from-white/30 to-transparent" />
+                  <div className="absolute inset-0 bg-gradient-to-tr from-white/10 to-transparent" />
                   {isAnalyzing ? (
                     <Loader2 className="w-7 h-7 text-white animate-spin" />
                   ) : (
@@ -675,7 +630,7 @@ export default function Dashboard() {
                       animate={{ rotate: 360 }} 
                       transition={{ duration: 15, repeat: Infinity, ease: 'linear' }}
                     >
-                       <Sparkles className="w-7 h-7 text-white" />
+                       <Sparkles className="w-7 h-7" />
                     </motion.div>
                   )}
                </motion.button>
@@ -702,29 +657,6 @@ export default function Dashboard() {
               </div>
               <div className="flex-1 overflow-y-auto p-4 custom-scrollbar">
                  <DataEntry />
-              </div>
-            </motion.div>
-          </>
-        )}
-      </AnimatePresence>
-
-      <AnimatePresence>
-        {isMemoryOpen && (
-          <>
-            <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }} onClick={() => setIsMemoryOpen(false)} className="fixed inset-0 bg-slate-950/90 backdrop-blur-md z-[100]" />
-            <motion.div initial={{ x: '100%' }} animate={{ x: 0 }} exit={{ x: '100%' }} transition={{ type: 'spring', damping: 30, stiffness: 300 }} className="fixed inset-y-0 right-0 w-full sm:w-[540px] bg-slate-900 border-l border-white/10 shadow-2xl z-[110] flex flex-col">
-              <div className="flex items-center justify-between p-8 border-b border-white/5 bg-slate-950/20">
-                 <div className="flex items-center gap-4">
-                    <div className="p-3 bg-purple-500/20 rounded-2xl shadow-inner"><BrainCircuit className="w-6 h-6 text-purple-400" /></div>
-                    <div>
-                       <h2 className="text-lg font-black text-white uppercase tracking-tight leading-none">Archives</h2>
-                       <p className="text-[10px] text-slate-500 font-bold uppercase tracking-widest mt-1">Hồ sơ thông tin & Ký ức</p>
-                    </div>
-                 </div>
-                 <button onClick={() => setIsMemoryOpen(false)} className="p-3 bg-white/5 rounded-2xl text-slate-500 hover:text-white"><X className="w-5 h-5" /></button>
-              </div>
-              <div className="flex-1 overflow-y-auto custom-scrollbar">
-                 <Notes />
               </div>
             </motion.div>
           </>

@@ -137,6 +137,12 @@ export interface AIInsight {
   daily_target?: string;
   references?: string[];
   riskAlert?: string;
+  prediction?: {
+    estimatedFinish: number;
+    gapToGoal: number;
+    trend: 'up' | 'down' | 'stable';
+    message: string;
+  };
 }
 
 export interface DailySnapshot {

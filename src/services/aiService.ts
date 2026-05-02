@@ -129,52 +129,54 @@ export async function getAIInsight(
       ).join('\n');
     }
 
-    const prompt = `Bạn là ĐẶC PHÁI VIÊN Cố vấn Chiến thuật cấp cao của Nam Dược.
-Nhiệm vụ: Phân tích các lỗ hổng KPI và đề xuất "Kế hoạch Tác chiến" (Daily Battle Plan) hằng ngày để cứu vãn hoặc bứt phá doanh số.
-Phong cách: Quyết đoán, trực diện, không nói suông, tập trung 100% vào hành động ra tiền.
+    const prompt = `Bạn là SIÊU CỐ VẤN CHIẾN LƯỢC (AI PREDICTIVE) của Nam Dược.
+Nhiệm vụ: Không chỉ phân tích quá khứ, bạn phải DỰ BÁO tương lai và đưa ra các quyết định hành động để đảm bảo 100% mục tiêu.
 
-DỮ LIỆU CỨNG:
+DỮ LIỆU ĐỊNH LƯỢNG (REAL-TIME):
 ${deterministicAlert}
-- % Doanh số đạt: ${salesPercent.toFixed(1)}%
-- % Thời gian trôi qua: ${timePercent.toFixed(0)}%
-- Dự báo cuối tháng: ${forecast.toFixed(1)}%
-- SKU hiện tại: ${sku.toFixed(1)}
-- Độ phủ (Coverage): ${coverage.toFixed(1)}
-- Số ngày còn lại: ${remainingDays}
-- Năng suất CẦN THIẾT: ${requiredDailySales.toFixed(1)}/ngày
+- Tiến độ Doanh số: ${salesPercent.toFixed(1)}%
+- Tiến độ Thời gian: ${timePercent.toFixed(0)}% (Ngày ${new Date().getDate()}/30)
+- Trend hiện tại (Run-rate): ${(salesPercent / (timePercent || 1) * 100).toFixed(1)}% so với kế hoạch
+- Dự báo tự động (cơ bản): ${forecast.toFixed(1)}%
+- Số ngày còn lại để "về đích": ${remainingDays} ngày
+- Năng suất trung bình đang đạt: ${avgDailySales.toFixed(1)}/ngày
+- Năng suất CẦN THIẾT để đạt 100%: ${requiredDailySales.toFixed(1)}/ngày
 ${strategicConstraint}
 ${userSkillContext}
 ${historyContext}
 ${memoryContext}
 
-QUY TẮC CỐ VẤN:
-1. Ưu tiên hành động từ "NGỮ CẢNH TRÍ NHỚ" nếu độ liên quan > 70%.
-2. Phải chỉ ra nguyên nhân cốt lõi trong "main_issue" dựa trên so sánh Doanh số vs Thời gian.
+QUY TẮC CỐ VẤN PREDICTIVE:
+1. Tính toán "Khoảng cách thiếu hụt" (Gap) tại ngày 30 nếu giữ nguyên tốc độ này.
+2. Đưa ra dự báo (Estimated Finish) dựa trên run-rate và đặc điểm kỹ năng người dùng.
+3. Nếu "Estimated Finish" < 100%, riskAlert phải cực kỳ gắt và chỉ đích danh "vùng trũng" (Sales, Coverage, hay SKU).
+4. Hành động phải tập trung vào việc "xoay chuyển dự báo" (VD: Tập trung vào SKU tập trung có điểm KPI cao để kéo điểm tổng).
 
-YÊU CẦU ĐẦU RA (JSON):
+YÊU CẦU ĐẦU RA (JSON CHUẨN):
 {
   "status": "tốt|nguy hiểm|rất nguy hiểm",
-  "riskAlert": "Cảnh báo cụ thể về rủi ro hụt KPI",
-  "main_issue": "Nguyên nhân chính dẫn đến tình trạng hiện tại",
-  "daily_target": "X triệu doanh số",
+  "riskAlert": "Cảnh báo dự báo hụt bao nhiêu % if continue current trend",
+  "main_issue": "Nguyên nhân cốt lõi khiến dự báo không đạt 100%",
+  "daily_target": "Con số doanh số hằng ngày phải đạt từ mai",
+  "prediction": {
+    "estimatedFinish": 85.5,
+    "gapToGoal": 14.5,
+    "trend": "up|down|stable",
+    "message": "Lời giải thích ngắn gọn về dự báo (VD: Với đà này bạn sẽ hụt 15% mục tiêu...)"
+  },
   "actions": [
     { 
-      "task": "Nội dung hành động cụ thể và hành động được ngay", 
+      "task": "Nội dung hành động cụ thể", 
       "type": "coverage|sales|sku|other",
       "priority": "high", 
-      "impact": "Tăng trưởng dự kiến (VD: +2%)",
-      "expectedImpact": "Giá trị quy đổi (VD: +1.5tr VNĐ)",
-      "confidence": 0.85,
-      "confidenceDetails": { "dataQuality": 0.9, "historicalSupport": 0.8, "memoryMatch": 0.9 }
+      "impact": "Mức đóng góp vào việc lấp đầy Gap (VD: +3%)",
+      "expectedImpact": "Giá trị quy đổi",
+      "confidence": 0.85
     }
-  ],
-  "references": ["..."]
+  ]
 }
 
-LƯU Ý QUAN TRỌNG:
-1. Phải luôn đề xuất THỨ TỰ ƯU TIÊN (Priority) dựa trên Impact và Confidence.
-2. Hành động phải cực kỳ cụ thể (VD: "Gọi khách B ngay" thay vì "Chăm sóc khách hàng").
-3. Thêm tính cấp bách (Urgency) vào phần riskAlert.`;
+PHONG CÁCH: Chuyên nghiệp, sắc bén, trọng tâm vào con số dự báo.`;
 
     const response = await ai.models.generateContent({
       model: state.settings.geminiModel || 'gemini-3-flash-preview',

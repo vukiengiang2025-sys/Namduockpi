@@ -3,13 +3,14 @@ import Dashboard from './pages/Dashboard';
 import YearlyData from './pages/YearlyData';
 import Weekly from './pages/Weekly';
 import Settings from './pages/Settings';
-import { LayoutDashboard, CalendarDays, BarChart3, Settings as SettingsIcon } from 'lucide-react';
+import { LayoutDashboard, CalendarDays, BarChart3, Settings as SettingsIcon, BrainCircuit, ShieldCheck } from 'lucide-react';
 import { cn } from './lib/utils';
 import { motion, AnimatePresence } from 'motion/react';
 import { useAppStore } from './store';
+import Notes from './pages/Notes';
 
 export default function App() {
-  const [activeTab, setActiveTab] = useState<'dashboard' | 'yearly' | 'weekly' | 'settings'>('dashboard');
+  const [activeTab, setActiveTab] = useState<'dashboard' | 'yearly' | 'intel' | 'strategy' | 'settings'>('dashboard');
   const [isSidebarOpen, setIsSidebarOpen] = useState(false);
   const { settings } = useAppStore();
 
@@ -105,10 +106,11 @@ export default function App() {
         </div>
 
         <nav className="flex-1 space-y-2">
-          <NavItem id="dashboard" icon={LayoutDashboard} label="Bàn làm việc" />
-          <NavItem id="yearly" icon={CalendarDays} label="Dữ liệu Năm" />
-          <NavItem id="weekly" icon={BarChart3} label="Theo dõi Tuần" />
-          <NavItem id="settings" icon={SettingsIcon} label="Cấu hình AI" />
+          <NavItem id="dashboard" icon={LayoutDashboard} label="Chiến lược" />
+          <NavItem id="yearly" icon={CalendarDays} label="Mục tiêu Năm" />
+          <NavItem id="intel" icon={BrainCircuit} label="Ký ức AI" />
+          <NavItem id="strategy" icon={BarChart3} label="Tổng kết Tuần" />
+          <NavItem id="settings" icon={SettingsIcon} label="Hệ thống" />
         </nav>
 
         <div className="mt-auto pt-6 border-t border-white/5">
@@ -155,10 +157,11 @@ export default function App() {
                   <button onClick={() => setIsSidebarOpen(false)} className="w-8 h-8 flex items-center justify-center rounded-full hover:bg-white/10 text-slate-500 transition-colors">✕</button>
                 </div>
                 <nav className="space-y-3">
-                  <NavItem id="dashboard" icon={LayoutDashboard} label="Bàn làm việc" />
-                  <NavItem id="yearly" icon={CalendarDays} label="Dữ liệu Năm" />
-                  <NavItem id="weekly" icon={BarChart3} label="Theo dõi Tuần" />
-                  <NavItem id="settings" icon={SettingsIcon} label="Cấu hình AI" />
+                  <NavItem id="dashboard" icon={LayoutDashboard} label="Chiến lược" />
+                  <NavItem id="yearly" icon={CalendarDays} label="Mục tiêu Năm" />
+                  <NavItem id="intel" icon={BrainCircuit} label="Ký ức AI" />
+                  <NavItem id="strategy" icon={BarChart3} label="Tổng kết Tuần" />
+                  <NavItem id="settings" icon={SettingsIcon} label="Hệ thống" />
                 </nav>
               </motion.aside>
             </>
@@ -178,7 +181,8 @@ export default function App() {
             >
               {activeTab === 'dashboard' && <Dashboard key="dashboard" />}
               {activeTab === 'yearly' && <YearlyData key="yearly" />}
-              {activeTab === 'weekly' && <Weekly key="weekly" />}
+              {activeTab === 'intel' && <Notes key="intel" />}
+              {activeTab === 'strategy' && <Weekly key="strategy" />}
               {activeTab === 'settings' && <Settings key="settings" />}
             </motion.div>
           </AnimatePresence>

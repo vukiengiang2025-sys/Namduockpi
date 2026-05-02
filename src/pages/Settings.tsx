@@ -1,6 +1,6 @@
 import { motion } from 'motion/react';
 import { useAppStore } from '../store';
-import { Settings as SettingsIcon, Key, Palette, Save, Type, Hexagon, Box, Target, Activity, LayoutDashboard, BarChart3, PieChart, Shapes, Sun, Moon, Type as TypeIcon, Image as ImageIcon, Sliders, Database, Download, Upload } from 'lucide-react';
+import { Settings as SettingsIcon, Key, Palette, Save, Type, Hexagon, Box, Target, Activity, LayoutDashboard, BarChart3, PieChart, Shapes, Sun, Moon, Type as TypeIcon, Image as ImageIcon, Sliders, Database, Download, Upload, BrainCircuit, ShieldCheck, Cpu, Sparkles, TrendingUp } from 'lucide-react';
 import { useState, useEffect } from 'react';
 
 import { saveFile } from '../lib/fileSystem';
@@ -13,14 +13,14 @@ const THEMES = [
 ];
 
 export const APP_ICONS = [
+  { id: 'brain', icon: BrainCircuit },
+  { id: 'shield', icon: ShieldCheck },
+  { id: 'cpu', icon: Cpu },
+  { id: 'sparkles', icon: Sparkles },
+  { id: 'trending', icon: TrendingUp },
   { id: 'hexagon', icon: Hexagon },
-  { id: 'box', icon: Box },
   { id: 'target', icon: Target },
   { id: 'activity', icon: Activity },
-  { id: 'layout', icon: LayoutDashboard },
-  { id: 'bar-chart', icon: BarChart3 },
-  { id: 'pie-chart', icon: PieChart },
-  { id: 'shapes', icon: Shapes },
 ];
 
 export default function Settings() {
