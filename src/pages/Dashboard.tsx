@@ -1,5 +1,6 @@
+import { Link } from 'react-router-dom';
 import { useAppStore, DailyTask } from '../store';
-import { calc15DaysSalesKPI, calcCoverageKPI, calcSalesKPI, calcSKUKPI } from '../lib/kpi';
+import { calc15DaysKPI, calcCoverageKPI, calcSalesKPI, calcSKUKPI, calcTotalKPI, FULL_MONTHS_VI } from '../lib/kpi';
 import { formatPercent, cn } from '../lib/utils';
 import { motion, AnimatePresence } from 'motion/react';
 import { 
@@ -7,7 +8,7 @@ import {
   CheckCircle2, Clock, FileSpreadsheet, AlertTriangle, Lightbulb, 
   Sparkles, Loader2, BrainCircuit, ChevronRight, X, PlusCircle, 
   Bookmark, History, Database, ShieldCheck, ArrowLeft,
-  ChevronDown, BarChart3, Zap, ArrowUpRight
+  ChevronDown, BarChart3, Zap, ArrowUpRight, Flame
 } from 'lucide-react';
 import React, { useRef, useState, useMemo } from 'react';
 import * as XLSX from 'xlsx';
@@ -26,7 +27,8 @@ import { saveFile } from '../lib/fileSystem';
 export default function Dashboard() {
   const { 
     months, selectedMonthIndex, setSelectedMonthIndex, settings,
-    dailyTasks, setDailyTasks, toggleDailyTask, lastInsight, setLastInsight, memories
+    dailyTasks, setDailyTasks, toggleDailyTask, lastInsight, setLastInsight, memories,
+    streak, updateDailyTaskProgress, startDailyTask
   } = useAppStore();
   
   const [isAnalyzing, setIsAnalyzing] = useState(false);
@@ -36,22 +38,86 @@ export default function Dashboard() {
   const currentMonthIndex = selectedMonthIndex;
   
   const month = months[currentMonthIndex];
+  const [taskFilter, setTaskFilter] = useState('all');
   
   // KPI Calculations & States
   const daysInMonth = new Date(new Date().getFullYear(), realCurrentMonthIndex + 1, 0).getDate();
   const currentDay = new Date().getDate();
-  const timeElapsedRatio = (currentDay / daysInMonth) * 100;
-  
-  const salesRatio = (month.salesActual / (month.salesTarget || 1)) * 100;
-  const coverageRatio = (month.coverageActual / (month.coverageTarget || 1)) * 100;
-  const skuRatio = (month.skuActual / 10) * 100;
+  const isCurrentMonth = selectedMonthIndex === realCurrentMonthIndex;
+
+  const monthSalesKPI = useMemo(() => calcSalesKPI(month.salesActual, month.salesTarget, settings.kpiWeights), [month, settings.kpiWeights]);
+  const monthCoverageKPI = useMemo(() => calcCoverageKPI(month.coverageActual, month.coverageTarget, settings.kpiWeights), [month, settings.kpiWeights]);
+  const month15DaysKPI = useMemo(() => calc15DaysKPI(month.sales15DaysActual, month.salesTarget), [month]);
+  const monthSKUKPI = useMemo(() => calcSKUKPI(month.skuActual), [month]);
+  const monthTotalKPI = useMemo(() => calcTotalKPI(month, settings.kpiWeights), [month, settings.kpiWeights]);
+
+  const salesRatio = useMemo(() => (month.salesTarget > 0 ? (month.salesActual / month.salesTarget) * 100 : 0), [month]);
+  const coverageRatio = useMemo(() => (month.coverageTarget > 0 ? (month.coverageActual / month.coverageTarget) * 100 : 0), [month]);
+  const skuRatio = (month.skuActual / 4.7) * 100;
+
+  const timeElapsedRatio = isCurrentMonth ? (currentDay / daysInMonth) * 100 : 100;
 
   // Prediction Engine
   const avgDailySalesSoFar = month.salesActual / Math.max(1, currentDay);
-  const remainingDays = Math.max(1, daysInMonth - currentDay);
-  const projectedSalesEndOfMonth = month.salesActual + (avgDailySalesSoFar * remainingDays);
+  const remainingDays = isCurrentMonth ? Math.max(0, daysInMonth - currentDay) : 0;
+  const projectedSalesEndOfMonth = isCurrentMonth ? month.salesActual + (avgDailySalesSoFar * remainingDays) : month.salesActual;
   const projectedSalesRatio = (projectedSalesEndOfMonth / (month.salesTarget || 1)) * 100;
-  const requiredDailySales = Math.max(0, (month.salesTarget - month.salesActual) / remainingDays);
+  const requiredDailySales = isCurrentMonth ? Math.max(0, (month.salesTarget - month.salesActual) / remainingDays) : 0;
+
+  const GapAnalysis = () => {
+    const salesGap = Math.max(0, month.salesTarget - month.salesActual);
+    const coverageGap = Math.max(0, month.coverageTarget - month.coverageActual);
+    const skuGap = Math.max(0, 4.7 - month.skuActual);
+    const dailyQuota = remainingDays > 0 ? salesGap / remainingDays : 0;
+    const runRate = month.salesActual / Math.max(1, currentDay);
+    
+    const items = [
+      { label: "Thiếu doanh số", val: salesGap.toLocaleString() + "đ", sub: "Gap cần bù", color: salesGap === 0 ? "text-emerald-400" : "text-red-400", bg: "bg-red-500/5" },
+      { label: "Quota / ngày", val: Math.round(dailyQuota).toLocaleString() + "đ", sub: `${remainingDays} ngày còn lại`, color: "text-amber-400", bg: "bg-amber-500/5" },
+      { label: "Dự báo cuối tháng", val: projectedSalesRatio.toFixed(1) + "%", sub: projectedSalesRatio >= 100 ? "✓ Đạt mục tiêu" : "⚠ Hụt mục tiêu", color: projectedSalesRatio >= 100 ? "text-emerald-400" : "text-red-400", bg: projectedSalesRatio >= 100 ? "bg-emerald-500/5" : "bg-red-500/5" },
+      { label: "Coverage gap", val: coverageGap + " NT", sub: coverageGap === 0 ? "✓ Đủ bao phủ" : "Cần thêm " + coverageGap + " điểm", color: coverageGap === 0 ? "text-emerald-400" : "text-amber-400", bg: "bg-amber-500/5" },
+      { label: "SKU gap", val: skuGap.toFixed(1), sub: skuGap === 0 ? "✓ Đủ tier" : "Cần thêm " + skuGap.toFixed(1) + " SKU", color: skuGap === 0 ? "text-emerald-400" : "text-purple-400", bg: "bg-purple-500/5" },
+      { label: "Run-rate ngày", val: Math.round(runRate).toLocaleString() + "đ", sub: "Trung bình hiện tại", color: runRate >= dailyQuota ? "text-emerald-400" : "text-amber-400", bg: "bg-slate-500/5" },
+    ];
+
+    return (
+      <div className="rounded-[2.5rem] p-6 mb-8 bg-slate-900/40 border border-white/5 backdrop-blur-xl">
+        <p className="text-[10px] font-black text-slate-500 uppercase tracking-widest mb-4">Phân tích Gap — Đa chiều</p>
+        <div className="grid grid-cols-2 lg:grid-cols-3 gap-3">
+          {items.map(item => (
+            <div key={item.label} className={cn("rounded-2xl p-4 border border-white/5", item.bg)}>
+              <p className={cn("text-[8px] font-black uppercase tracking-widest mb-1.5", item.color)}>{item.label}</p>
+              <p className="text-sm font-black font-mono text-white leading-none">{item.val}</p>
+              <p className="text-[8px] text-slate-500 mt-1 font-bold uppercase tracking-tight">{item.sub}</p>
+            </div>
+          ))}
+        </div>
+      </div>
+    );
+  };
+
+  const MilestoneBadge = ({ salesPct }: { salesPct: number }) => {
+    const milestones = [];
+    if (salesPct >= 120) milestones.push({ label: "🏆 XUẤT SẮC", color: "text-amber-400", bg: "bg-amber-500/10", border: "border-amber-500/20" });
+    else if (salesPct >= 100) milestones.push({ label: "✅ ĐẠT MỤC TIÊU", color: "text-emerald-400", bg: "bg-emerald-500/10", border: "border-emerald-500/20" });
+    else if (salesPct >= 80) milestones.push({ label: "⚡ GẦN ĐẠT", color: "text-blue-400", bg: "bg-blue-500/10", border: "border-blue-500/20" });
+    
+    if (milestones.length === 0) return null;
+    return (
+      <div className="flex flex-wrap gap-2 mb-6">
+        {milestones.map((m, i) => (
+          <motion.span 
+            initial={{ opacity: 0, scale: 0.8 }}
+            animate={{ opacity: 1, scale: 1 }}
+            key={i} 
+            className={cn("text-[10px] font-black px-3 py-1 rounded-full border", m.color, m.bg, m.border)}
+          >
+            {m.label}
+          </motion.span>
+        ))}
+      </div>
+    );
+  };
 
   const getStatus = (ratio: number, base: number = timeElapsedRatio) => {
     if (ratio >= base) return 'success';
@@ -62,12 +128,6 @@ export default function Dashboard() {
   const salesStatus = getStatus(salesRatio);
   const coverageStatus = getStatus(coverageRatio);
   const skuStatus = getStatus(skuRatio, 100);
-
-  const monthSalesKPI = calcSalesKPI(month.salesActual, month.salesTarget);
-  const monthCoverageKPI = calcCoverageKPI(month.coverageActual, month.coverageTarget);
-  const month15DaysKPI = calc15DaysSalesKPI(month.sales15DaysActual, month.salesTarget);
-  const monthSKUKPI = calcSKUKPI(month.skuActual);
-  const monthTotalKPI = monthSalesKPI + monthCoverageKPI + month15DaysKPI + monthSKUKPI + (month.customPoints || 0);
 
   const handleAnalyze = async () => {
     setIsAnalyzing(true);
@@ -104,11 +164,11 @@ export default function Dashboard() {
   const handleExportExcel = () => {
     // Export full year data
     const kpiData = months.map((m, i) => {
-      const salesKPI = calcSalesKPI(m.salesActual, m.salesTarget);
-      const coverageKPI = calcCoverageKPI(m.coverageActual, m.coverageTarget);
-      const month15DaysKPI = calc15DaysSalesKPI(m.sales15DaysActual, m.salesTarget);
+      const salesKPI = calcSalesKPI(m.salesActual, m.salesTarget, settings.kpiWeights);
+      const coverageKPI = calcCoverageKPI(m.coverageActual, m.coverageTarget, settings.kpiWeights);
+      const m15DaysKPI = calc15DaysKPI(m.sales15DaysActual, m.salesTarget);
       const skuKPI = calcSKUKPI(m.skuActual);
-      const totalKPI = salesKPI + coverageKPI + month15DaysKPI + skuKPI + (m.customPoints || 0);
+      const totalKPI = calcTotalKPI(m, settings.kpiWeights);
       
       return {
         'Tháng': `Tháng ${i + 1}`,
@@ -211,6 +271,15 @@ export default function Dashboard() {
            </div>
 
            <div className="flex items-center gap-3">
+              {streak > 0 && (
+                <div className="flex items-center gap-2 px-4 py-2.5 bg-orange-500/10 border border-orange-500/20 rounded-2xl shadow-lg shadow-orange-500/5">
+                  <Flame className="w-4 h-4 text-orange-500 fill-current" />
+                  <div className="flex flex-col">
+                    <span className="text-[10px] font-black text-orange-500 leading-none uppercase">Streak</span>
+                    <span className="text-xs font-black text-white leading-none">{streak} Ngày</span>
+                  </div>
+                </div>
+              )}
               <motion.select 
                 whileHover={{ scale: 1.05 }}
                 whileTap={{ scale: 0.95 }}
@@ -320,7 +389,9 @@ export default function Dashboard() {
 
            {dailyTasks.length > 0 ? (
               <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6 relative z-10">
-                 {dailyTasks.map((task, idx) => (
+                 {dailyTasks
+                   .filter(t => taskFilter === 'all' || t.type === taskFilter)
+                   .map((task, idx) => (
                     <ActionCard 
                       key={task.id}
                       task={task}
@@ -343,34 +414,37 @@ export default function Dashboard() {
            )}
         </motion.section>
 
-        {/* TIER 3: KPI RADAR */}
+        {/* TIER 3: KPI RADAR & ANALYSIS */}
         <section className="space-y-8">
-           <motion.div variants={itemVariants} className="flex items-center justify-between px-4">
-              <div className="flex flex-col">
-                <span className="text-[10px] font-black text-slate-600 uppercase tracking-[0.2em] mb-1">Dòng chảy KPI</span>
-                <motion.div 
-                  initial={{ width: 0 }}
-                  animate={{ width: 48 }}
-                  className="h-0.5 bg-blue-500/50 rounded-full" 
-                />
-              </div>
-              <div className="flex items-center gap-6">
-                 <div className="text-right">
-                    <p className="text-[8px] text-slate-600 uppercase font-black tracking-tighter">Thời gian trôi</p>
-                    <p className="text-xs font-black text-white">{timeElapsedRatio.toFixed(1)}%</p>
-                 </div>
-                 <div className="text-right">
-                    <p className="text-[8px] text-slate-600 uppercase font-black tracking-tighter">Dự báo đích</p>
-                    <motion.p 
-                      animate={{ opacity: [0.7, 1, 0.7] }}
-                      transition={{ duration: 2, repeat: Infinity }}
-                      className={cn("text-xs font-black", projectedSalesRatio >= 100 ? "text-emerald-500" : "text-yellow-500")}
-                    >
-                      {projectedSalesRatio.toFixed(1)}%
-                    </motion.p>
-                 </div>
-              </div>
-           </motion.div>
+           <div className="px-4">
+             <MilestoneBadge salesPct={salesRatio} />
+             <motion.div variants={itemVariants} className="flex items-center justify-between">
+                <div className="flex flex-col">
+                  <span className="text-[10px] font-black text-slate-600 uppercase tracking-[0.2em] mb-1">Dòng chảy KPI</span>
+                  <motion.div 
+                    initial={{ width: 0 }}
+                    animate={{ width: 48 }}
+                    className="h-0.5 bg-blue-500/50 rounded-full" 
+                  />
+                </div>
+                <div className="flex items-center gap-6">
+                   <div className="text-right">
+                      <p className="text-[8px] text-slate-600 uppercase font-black tracking-tighter">Thời gian trôi</p>
+                      <p className="text-xs font-black text-white">{timeElapsedRatio.toFixed(1)}%</p>
+                   </div>
+                   <div className="text-right">
+                      <p className="text-[8px] text-slate-600 uppercase font-black tracking-tighter">Dự báo đích</p>
+                      <motion.p 
+                        animate={{ opacity: [0.7, 1, 0.7] }}
+                        transition={{ duration: 2, repeat: Infinity }}
+                        className={cn("text-xs font-black", projectedSalesRatio >= 100 ? "text-emerald-500" : "text-yellow-500")}
+                      >
+                        {projectedSalesRatio.toFixed(1)}%
+                      </motion.p>
+                   </div>
+                </div>
+             </motion.div>
+           </div>
            
            <div className="grid grid-cols-2 lg:grid-cols-4 gap-4">
               <CommandMetric 
@@ -403,10 +477,38 @@ export default function Dashboard() {
                 icon={Award} 
               />
            </div>
+           
+           {/* GAP ANALYSIS — NEW v2.0 */}
+           <GapAnalysis />
         </section>
 
-        {/* TIER 4: SECONDARY INSIGHTS */}
-        <div className="grid grid-cols-1 lg:grid-cols-12 gap-8 items-start pb-20">
+        {/* TIER 4: DAILY STRIKE */}
+        <div className="flex items-center justify-between px-4 mb-4">
+           <div className="flex flex-col">
+             <span className="text-[10px] font-black text-slate-600 uppercase tracking-[0.2em] mb-1">Chiến sự hôm nay</span>
+             <div className="flex items-center gap-2">
+                <div className="h-0.5 w-8 bg-blue-500/50 rounded-full" />
+                <span className="text-[9px] font-black text-blue-500 uppercase">{dailyTasks.filter(t => t.isCompleted).length}/{dailyTasks.length} Đã xong</span>
+             </div>
+           </div>
+           <div className="flex gap-2">
+              {['all', 'sales', 'coverage', 'sku'].map(filt => (
+                <button 
+                  key={filt}
+                  onClick={() => setTaskFilter(filt)}
+                  className={cn(
+                    "px-3 py-1.5 rounded-xl text-[9px] font-black uppercase tracking-widest transition-all",
+                    taskFilter === filt ? "bg-blue-500 text-white" : "bg-slate-900/50 text-slate-500 border border-white/5"
+                  )}
+                >
+                  {filt === 'all' ? 'Tất cả' : filt === 'sales' ? 'Doanh số' : filt === 'coverage' ? 'Bao phủ' : 'SKU'}
+                </button>
+              ))}
+           </div>
+        </div>
+
+        {/* ACTIONS & SECONDARY SECTION */}
+        <div className="grid grid-cols-1 lg:grid-cols-12 gap-8 items-start relative mb-20 px-4">
            
            <motion.div variants={itemVariants} className="lg:col-span-8 space-y-8">
               <section className="p-8 bg-slate-900/40 rounded-[3rem] border border-white/5 relative overflow-hidden group hover:bg-slate-900/60 transition-colors">
@@ -541,9 +643,11 @@ export default function Dashboard() {
                  </div>
                  <div className="space-y-4">
                     {[
-                      { label: 'Doanh số thiếu', value: (month.salesTarget - month.salesActual).toLocaleString() + 'đ', desc: 'Gap', status: 'danger' },
-                      { label: 'Hạn mức Ngày', value: requiredDailySales.toLocaleString() + 'đ', desc: 'Quota', status: 'warning' },
-                      { label: 'Số Site hoạt động', value: month.coverageActual.toString(), desc: 'Active Sites', status: 'stable' },
+                      { label: 'Thiếu Doanh số', value: (Math.max(0, month.salesTarget - month.salesActual)).toLocaleString() + 'đ', desc: 'Sales Gap', status: (month.salesTarget - month.salesActual > 0 ? 'danger' : 'success') },
+                      { label: 'Quota Hằng ngày', value: Math.round(requiredDailySales).toLocaleString() + 'đ', desc: 'Daily Target', status: 'warning' },
+                      { label: 'Dự báo Kết thúc', value: projectedSalesRatio.toFixed(1) + '%', desc: projectedSalesRatio >= 100 ? 'Đạt mục tiêu' : 'Hụt mục tiêu', status: projectedSalesRatio >= 100 ? 'success' : 'danger' },
+                      { label: 'Thiếu Bao phủ', value: Math.max(0, month.coverageTarget - month.coverageActual).toString() + ' NT', desc: 'Coverage Gap', status: month.coverageTarget > month.coverageActual ? 'warning' : 'success' },
+                      { label: 'Thiếu SKU', value: Math.max(0, 4.7 - month.skuActual).toFixed(1), desc: 'SKU Gap (to 4.7)', status: month.skuActual < 4.7 ? 'warning' : 'success' },
                     ].map((item, idx) => (
                       <motion.div 
                         initial={{ opacity: 0, x: 20 }}

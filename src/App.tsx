@@ -3,11 +3,12 @@ import Dashboard from './pages/Dashboard';
 import YearlyData from './pages/YearlyData';
 import Weekly from './pages/Weekly';
 import Settings from './pages/Settings';
-import { LayoutDashboard, CalendarDays, BarChart3, Settings as SettingsIcon, BrainCircuit, ShieldCheck } from 'lucide-react';
+import { LayoutDashboard, CalendarDays, BarChart3, Settings as SettingsIcon, BrainCircuit, ShieldCheck, Flame } from 'lucide-react';
 import { cn } from './lib/utils';
 import { motion, AnimatePresence } from 'motion/react';
 import { useAppStore } from './store';
 import Notes from './pages/Notes';
+import ToastContainer from './components/Toast';
 
 export default function App() {
   const [activeTab, setActiveTab] = useState<'dashboard' | 'yearly' | 'intel' | 'strategy' | 'settings'>('dashboard');
@@ -95,7 +96,7 @@ export default function App() {
 
       {/* Sidebar Desktop */}
       <aside className="hidden lg:flex flex-col w-64 bg-slate-900/40 backdrop-blur-3xl border-r border-white/5 p-6 sticky top-0 h-screen z-50">
-        <div className="flex items-center justify-between mb-10 px-2">
+        <div className="flex items-center justify-between mb-8 px-2">
           <div className={cn("w-10 h-10 rounded-2xl flex items-center justify-center shadow-2xl relative group", theme.bg)}>
              <BarChart3 className={cn("w-6 h-6 z-10", theme.text)} />
           </div>
@@ -104,6 +105,19 @@ export default function App() {
             <p className="text-[10px] text-slate-500 font-bold uppercase tracking-widest mt-1">Personal Edition</p>
           </div>
         </div>
+
+        {/* Streak Indicator — NEW v2.0 */}
+        {useAppStore.getState().streak > 0 && (
+          <div className="mx-2 mb-6 px-4 py-3 rounded-2xl bg-orange-500/10 border border-orange-500/20 flex items-center gap-3">
+             <div className="p-1.5 bg-orange-500/20 rounded-lg">
+                <Flame className="w-4 h-4 text-orange-500 fill-current" />
+             </div>
+             <div>
+                <p className="text-[9px] font-black text-orange-500 uppercase tracking-widest leading-none mb-1">Streak</p>
+                <p className="text-xs font-black text-white leading-none">{useAppStore.getState().streak} Ngày</p>
+             </div>
+          </div>
+        )}
 
         <nav className="flex-1 space-y-2">
           <NavItem id="dashboard" icon={LayoutDashboard} label="Chiến lược" />
@@ -188,6 +202,36 @@ export default function App() {
           </AnimatePresence>
         </main>
       </div>
+      
+      {/* Mobile Bottom Navigation — NEW v2.0 */}
+      <nav className="lg:hidden fixed bottom-0 left-0 right-0 bg-slate-900/80 backdrop-blur-2xl border-t border-white/5 px-6 py-3 flex items-center justify-between z-[100] pb-safe">
+        {[
+          { id: 'dashboard', icon: LayoutDashboard, label: 'Chiến sự' },
+          { id: 'yearly', icon: CalendarDays, label: 'Năm' },
+          { id: 'intel', icon: BrainCircuit, label: 'Ký ức' },
+          { id: 'settings', icon: SettingsIcon, label: 'Hệ thống' }
+        ].map(item => (
+          <button
+            key={item.id}
+            onClick={() => setActiveTab(item.id as any)}
+            className={cn(
+              "flex flex-col items-center gap-1 transition-all relative",
+              activeTab === item.id ? theme.text : "text-slate-500"
+            )}
+          >
+            <item.icon className={cn("w-5 h-5", activeTab === item.id && "scale-110")} />
+            <span className="text-[8px] font-black uppercase tracking-tighter">{item.label}</span>
+            {activeTab === item.id && (
+              <motion.div 
+                layoutId="mobile-active-dot" 
+                className={cn("absolute -top-1 w-1 h-1 rounded-full", theme.activeBg)} 
+              />
+            )}
+          </button>
+        ))}
+      </nav>
+
+      <ToastContainer />
     </div>
   );
 }

@@ -87,6 +87,7 @@ export interface DailyTask {
   expectedImpact?: string;
   confidence?: number;
   createdAt: number;
+  timer?: number;
   kpiAtStart?: number;
   type?: 'coverage' | 'sales' | 'sku' | 'other';
 }
@@ -184,6 +185,13 @@ export interface AppSettings {
   skuTiers?: { threshold: number; score: number }[];
 }
 
+export interface Toast {
+  id: string;
+  message: string;
+  type: 'success' | 'error' | 'info';
+  duration?: number;
+}
+
 interface AppState {
   months: MonthData[];
   quarters: QuarterData[];
@@ -196,6 +204,8 @@ interface AppState {
   weeklyReports: WeeklyReport[];
   taskLogs: TaskLog[];
   strategyLogs: StrategyLog[];
+  streak: number;
+  toasts: Toast[];
   userProfile: UserProfile;
   lastInsight: AIInsight | null;
   settings: AppSettings;
@@ -220,6 +230,8 @@ interface AppState {
   updateUserProfile: (profile: Partial<UserProfile>) => void;
   setLastInsight: (insight: AIInsight | null) => void;
   updateSettings: (settings: Partial<AppSettings>) => void;
+  addToast: (toast: Omit<Toast, 'id'>) => void;
+  removeToast: (id: string) => void;
 }
 
 export const useAppStore = create<AppState>()(
@@ -233,6 +245,8 @@ export const useAppStore = create<AppState>()(
       weeklyReports: [],
       taskLogs: [],
       strategyLogs: [],
+      streak: 0,
+      toasts: [],
       userProfile: {
         skills: {
           coverage: 1.0,
@@ -316,7 +330,7 @@ export const useAppStore = create<AppState>()(
         userProfile: data.userProfile || state.userProfile
       })),
       addNote: (note) => set((state) => ({
-        notes: [{ ...note, id: Math.random().toString(36).substring(2, 9), createdAt: Date.now() }, ...state.notes]
+        notes: [{ ...note, id: crypto.randomUUID().slice(0, 8), createdAt: Date.now() }, ...state.notes]
       })),
       toggleNote: (id) => set((state) => ({
         notes: state.notes.map(n => n.id === id ? { ...n, isCompleted: !n.isCompleted } : n)
@@ -325,7 +339,7 @@ export const useAppStore = create<AppState>()(
         notes: state.notes.filter(n => n.id !== id)
       })),
       addMemory: (memory) => set((state) => ({
-        memories: [{ ...memory, id: Math.random().toString(36).substring(2, 9), createdAt: Date.now() }, ...(state.memories || [])]
+        memories: [{ ...memory, id: crypto.randomUUID().slice(0, 8), createdAt: Date.now() }, ...(state.memories || [])]
       })),
       deleteMemory: (id) => set((state) => ({
         memories: (state.memories || []).filter(n => n.id !== id)
@@ -333,9 +347,10 @@ export const useAppStore = create<AppState>()(
       setDailyTasks: (tasks, currentKpi) => set({
         dailyTasks: tasks.map(t => ({
           ...t,
-          id: Math.random().toString(36).substring(2, 9),
+          id: crypto.randomUUID().slice(0, 8),
           createdAt: Date.now(),
           done: 0,
+          timer: 0,
           isCompleted: false,
           isStarted: false,
           kpiAtStart: currentKpi
@@ -357,10 +372,10 @@ export const useAppStore = create<AppState>()(
         weeklyReports: [report, ...state.weeklyReports].slice(0, 52)
       })),
       logTask: (log) => set((state) => ({
-        taskLogs: [{ ...log, id: Math.random().toString(36).substring(2, 9), timestamp: Date.now() }, ...state.taskLogs].slice(0, 100)
+        taskLogs: [{ ...log, id: crypto.randomUUID().slice(0, 8), timestamp: Date.now() }, ...state.taskLogs].slice(0, 100)
       })),
       addStrategyLog: (log) => set((state) => ({
-        strategyLogs: [{ ...log, id: Math.random().toString(36).substring(2, 9), timestamp: Date.now() }, ...state.strategyLogs].slice(0, 50)
+        strategyLogs: [{ ...log, id: crypto.randomUUID().slice(0, 8), timestamp: Date.now() }, ...state.strategyLogs].slice(0, 50)
       })),
       updateUserProfile: (profile) => set((state) => ({
         userProfile: { ...state.userProfile, ...profile }
@@ -368,6 +383,14 @@ export const useAppStore = create<AppState>()(
       setLastInsight: (lastInsight) => set({ lastInsight }),
       updateSettings: (settings) => set((state) => ({
         settings: { ...state.settings, ...settings }
+      })),
+      addToast: (toast) => set((state) => ({
+        // @ts-ignore
+        toasts: [{ ...toast, id: crypto.randomUUID().slice(0, 8) }, ...(state.toasts || [])]
+      })),
+      removeToast: (id) => set((state) => ({
+        // @ts-ignore
+        toasts: (state.toasts || []).filter(t => t.id !== id)
       }))
     }),
     {

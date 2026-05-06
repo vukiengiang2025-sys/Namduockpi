@@ -1,6 +1,6 @@
 import { useAppStore } from '../store';
 import { motion } from 'motion/react';
-import { calc15DaysSalesKPI, calcCoverageKPI, calcSalesKPI, calcSKUKPI } from '../lib/kpi';
+import { calc15DaysKPI, calcCoverageKPI, calcSalesKPI, calcSKUKPI } from '../lib/kpi';
 import { formatPercent } from '../lib/utils';
 
 function TableGroup({ title, accentColor = 'blue', children, totalPoints }: any) {
@@ -22,20 +22,8 @@ function TableGroup({ title, accentColor = 'blue', children, totalPoints }: any)
           {title}
         </h3>
       </div>
-      <div className="overflow-x-auto -mx-4 px-4 sm:mx-0 sm:px-0 pb-2">
-        <table className="w-full text-xs text-left min-w-[320px]">
-          <thead className="text-slate-500 uppercase border-b border-white/10">
-            <tr className="text-[10px]">
-              <th className="pb-2 font-medium w-3/12">Chỉ tiêu</th>
-              <th className="pb-2 font-medium w-3/12">Khoán</th>
-              <th className="pb-2 font-medium w-3/12">Thực đạt</th>
-              <th className="pb-2 text-right font-medium w-3/12">Tỷ lệ | Điểm</th>
-            </tr>
-          </thead>
-          <tbody className="text-slate-300 divide-y divide-white/5">
-            {children}
-          </tbody>
-        </table>
+      <div className="flex flex-col gap-3">
+        {children}
       </div>
       <div className={`mt-4 p-3 ${bgSoftClass} rounded-xl border border-white/5 flex justify-between items-center`}>
         <span className="text-xs font-bold text-white tracking-widest uppercase">Tổng Điểm</span>
@@ -49,33 +37,38 @@ function TableRow({ label, targetValue, onTargetChange, actualValue, onActualCha
   const isReadOnly = !onTargetChange || !onActualChange;
 
   return (
-    <tr className="group hover:bg-white/[0.02] transition-colors">
-      <td className="py-3 pr-2 font-medium text-[11px] leading-tight text-white">{label}</td>
-      <td className="py-3 pr-2">
-        <input 
-          type="number"
-          value={targetValue === 0 && !targetValue ? '' : targetValue}
-          onChange={onTargetChange || (() => {})}
-          readOnly={isReadOnly}
-          className={`bg-slate-800/50 border border-white/10 rounded px-2 py-1.5 w-full text-xs text-blue-400 font-mono outline-none min-w-[60px] ${isReadOnly ? 'opacity-70 cursor-not-allowed' : 'focus:ring-1 focus:ring-emerald-500'}`}
-        />
-      </td>
-      <td className="py-3 pr-2">
-        <input 
-          type="number"
-          value={actualValue === 0 && !actualValue ? '' : actualValue}
-          onChange={onActualChange || (() => {})}
-          readOnly={isReadOnly}
-          className={`bg-white/10 border border-white/10 rounded px-2 py-1.5 w-full text-xs text-white font-mono outline-none min-w-[60px] ${isReadOnly ? 'opacity-70 cursor-not-allowed' : 'focus:ring-1 focus:ring-emerald-500'}`}
-        />
-      </td>
-      <td className="py-3 text-right">
-        <div className="flex flex-col items-end">
-          {ratio && <span className="text-[9px] text-slate-500 font-mono mb-0.5">{ratio}</span>}
-          <span className="font-bold text-emerald-400 font-mono text-sm">{point}</span>
-        </div>
-      </td>
-    </tr>
+    <div className="bg-slate-800/20 border border-white/5 rounded-2xl p-4 flex flex-col gap-3 group hover:bg-white/[0.02] transition-colors">
+      <div className="flex items-center justify-between border-b border-white/5 pb-2">
+         <span className="text-sm font-black text-white leading-tight uppercase tracking-widest">{label}</span>
+         {ratio && <span className="text-[10px] text-emerald-400 font-mono font-bold bg-emerald-500/10 px-2 py-0.5 rounded-full">{ratio}</span>}
+      </div>
+      <div className="grid grid-cols-2 gap-3 items-end">
+         <div className="flex flex-col gap-1.5">
+           <span className="text-[10px] font-bold text-slate-500 uppercase tracking-widest">Khoán</span>
+           <input 
+             type="number"
+             value={targetValue === 0 && !targetValue ? '' : targetValue}
+             onChange={onTargetChange || (() => {})}
+             readOnly={isReadOnly}
+             className={`bg-slate-800/50 border border-white/10 rounded-xl px-3 py-2 w-full text-sm text-blue-400 font-mono outline-none ${isReadOnly ? 'opacity-70 cursor-not-allowed' : 'focus:ring-1 focus:ring-emerald-500'}`}
+           />
+         </div>
+         <div className="flex flex-col gap-1.5">
+           <span className="text-[10px] font-bold text-slate-500 uppercase tracking-widest">Thực đạt</span>
+           <input 
+             type="number"
+             value={actualValue === 0 && !actualValue ? '' : actualValue}
+             onChange={onActualChange || (() => {})}
+             readOnly={isReadOnly}
+             className={`bg-white/5 border border-white/10 rounded-xl px-3 py-2 w-full text-sm text-white font-mono outline-none ${isReadOnly ? 'opacity-70 cursor-not-allowed' : 'focus:ring-1 focus:ring-emerald-500'}`}
+           />
+         </div>
+      </div>
+      <div className="flex items-center justify-between pt-2">
+         <span className="text-[9px] text-slate-500 uppercase tracking-widest font-bold">Điểm KPI</span>
+         <span className="font-black text-emerald-400 font-mono text-base bg-emerald-500/10 px-3 py-1 rounded-lg">{point}đ</span>
+      </div>
+    </div>
   );
 }
 
@@ -120,9 +113,9 @@ export default function DataEntry() {
   // Month Calcs
   const monthSalesRatio = formatPercent(month.salesActual, month.salesTarget);
   const monthCoverageRatio = formatPercent(month.coverageActual, month.coverageTarget);
-  const monthSalesKPI = calcSalesKPI(month.salesActual, month.salesTarget);
-  const monthCoverageKPI = calcCoverageKPI(month.coverageActual, month.coverageTarget);
-  const month15DaysKPI = calc15DaysSalesKPI(month.sales15DaysActual, month.salesTarget);
+  const monthSalesKPI = calcSalesKPI(month.salesActual, month.salesTarget, settings.kpiWeights);
+  const monthCoverageKPI = calcCoverageKPI(month.coverageActual, month.coverageTarget, settings.kpiWeights);
+  const month15DaysKPI = calc15DaysKPI(month.sales15DaysActual, month.salesTarget);
   const month15DaysRatio = formatPercent(month.sales15DaysActual, month.salesTarget);
   const monthSKUKPI = calcSKUKPI(month.skuActual);
   const monthTotalKPI = monthSalesKPI + monthCoverageKPI + month15DaysKPI + monthSKUKPI + (month.customPoints || 0);
@@ -130,15 +123,15 @@ export default function DataEntry() {
   // Quarter Calcs
   const quarterSalesRatio = formatPercent(quarter.salesActual, quarter.salesTarget);
   const quarterCoverageRatio = formatPercent(quarter.coverageActual, quarter.coverageTarget);
-  const quarterSalesKPI = calcSalesKPI(quarter.salesActual, quarter.salesTarget);
-  const quarterCoverageKPI = calcCoverageKPI(quarter.coverageActual, quarter.coverageTarget, 1);
+  const quarterSalesKPI = calcSalesKPI(quarter.salesActual, quarter.salesTarget, settings.kpiWeights);
+  const quarterCoverageKPI = calcCoverageKPI(quarter.coverageActual, quarter.coverageTarget, settings.kpiWeights);
   const quarterTotalKPI = quarterSalesKPI + quarterCoverageKPI + (quarterCustom.custom1Points || 0) + (quarterCustom.custom2Points || 0);
 
   // HalfYear Calcs
   const halfSalesRatio = formatPercent(halfYear.salesActual, halfYear.salesTarget);
   const halfCoverageRatio = formatPercent(halfYear.coverageActual, halfYear.coverageTarget);
-  const halfSalesKPI = calcSalesKPI(halfYear.salesActual, halfYear.salesTarget);
-  const halfCoverageKPI = calcCoverageKPI(halfYear.coverageActual, halfYear.coverageTarget, 1);
+  const halfSalesKPI = calcSalesKPI(halfYear.salesActual, halfYear.salesTarget, settings.kpiWeights);
+  const halfCoverageKPI = calcCoverageKPI(halfYear.coverageActual, halfYear.coverageTarget, settings.kpiWeights);
   const halfTotalKPI = halfSalesKPI + halfCoverageKPI + (halfCustom.customPoints || 0);
 
   const containerVariants = {
@@ -202,55 +195,72 @@ export default function DataEntry() {
               point={monthCoverageKPI.toFixed(1)}
             />
             {/* Other rows... */}
-            <tr className="group hover:bg-white/[0.02] transition-colors">
-              <td className="py-3 pr-2 font-medium text-[11px] leading-tight text-white">15 Ngày ({settings.kpiWeights?.month15Days || 5}đ)</td>
-              <td className="py-3 pr-2" colSpan={1}>
-                <span className="text-[9px] text-slate-500 font-mono">Dựa vào TDS khoán</span>
-              </td>
-              <td className="py-3 pr-2">
-                <input 
-                  type="number" value={month.sales15DaysActual || ''} onChange={handleNumChange(updateMonth, currentMonthIndex, 'sales15DaysActual')}
-                  placeholder="Thực đạt"
-                  className="bg-white/10 border border-white/10 rounded px-2 py-1.5 w-full text-xs text-white font-mono min-w-[60px] outline-none focus:ring-1 focus:ring-emerald-500"
-                />
-              </td>
-              <td className="py-3 text-right">
-                <div className="flex flex-col items-end">
-                  <span className="text-[9px] text-slate-500 font-mono mb-0.5">{month15DaysRatio}</span>
-                  <span className="font-bold text-emerald-400 font-mono text-sm">{month15DaysKPI.toFixed(1)}</span>
-                </div>
-              </td>
-            </tr>
-            <tr className="group hover:bg-white/[0.02] transition-colors">
-              <td className="py-3 pr-2 font-medium text-[11px] leading-tight text-white">SKU ({settings.kpiWeights?.sku || 7.5}đ)</td>
-              <td className="py-3 pr-2 text-slate-500 text-[10px] font-mono" colSpan={1}>Tính theo bậc điểm</td>
-              <td className="py-3 pr-2">
-                <input 
-                  type="number" value={month.skuActual || ''} onChange={handleNumChange(updateMonth, currentMonthIndex, 'skuActual')}
-                  className="bg-white/10 border border-white/10 rounded px-2 py-1.5 w-full text-xs text-white font-mono min-w-[60px] outline-none focus:ring-1 focus:ring-emerald-500"
-                />
-              </td>
-              <td className="py-3 text-right">
-                <span className="font-bold text-emerald-400 font-mono text-sm">{monthSKUKPI.toFixed(1)}</span>
-              </td>
-            </tr>
-            <tr className="group hover:bg-white/[0.02] transition-colors border-t border-white/10 border-dashed">
-              <td className="py-3 pr-2" colSpan={2}>
-                <input 
-                  type="text" value={month.customName} onChange={handleStrChange(updateMonth, currentMonthIndex, 'customName')} placeholder="Nhập tên tiêu chí tùy chọn..."
-                  className="bg-transparent border-b border-white/10 px-1 py-1 w-full text-[11px] text-slate-300 outline-none focus:border-emerald-500 placeholder:text-slate-600"
-                />
-              </td>
-              <td className="py-3 pr-2">
-                <input 
-                  type="number" value={month.customPoints === 0 ? '' : month.customPoints} onChange={handleNumChange(updateMonth, currentMonthIndex, 'customPoints')} placeholder="Điểm"
-                  className="bg-white/10 border border-white/10 rounded px-2 py-1.5 w-full text-xs text-white font-mono min-w-[60px] outline-none focus:ring-1 focus:ring-emerald-500"
-                />
-              </td>
-              <td className="py-3 text-right">
-                <span className="font-bold text-emerald-400 font-mono text-sm">{(month.customPoints || 0).toFixed(1)}</span>
-              </td>
-            </tr>
+            <div className="bg-slate-800/20 border border-white/5 rounded-2xl p-4 flex flex-col gap-3 group hover:bg-white/[0.02] transition-colors">
+              <div className="flex items-center justify-between border-b border-white/5 pb-2">
+                 <span className="text-sm font-black text-white leading-tight uppercase tracking-widest">15 Ngày ({settings.kpiWeights?.month15Days || 5}đ)</span>
+                 <span className="text-[10px] text-emerald-400 font-mono font-bold bg-emerald-500/10 px-2 py-0.5 rounded-full">{month15DaysRatio}</span>
+              </div>
+              <div className="grid grid-cols-2 gap-3 items-end">
+                 <div className="flex flex-col gap-1.5">
+                   <span className="text-[10px] font-bold text-slate-500 uppercase tracking-widest">Dựa vào TDS khoán</span>
+                   <div className="h-8 md:h-9"></div>
+                 </div>
+                 <div className="flex flex-col gap-1.5">
+                   <span className="text-[10px] font-bold text-slate-500 uppercase tracking-widest">Thực đạt</span>
+                   <input 
+                     type="number" value={month.sales15DaysActual || ''} onChange={handleNumChange(updateMonth, currentMonthIndex, 'sales15DaysActual')}
+                     placeholder="Thực đạt"
+                     className="bg-white/5 border border-white/10 rounded-xl px-3 py-2 w-full text-sm text-white font-mono outline-none focus:ring-1 focus:ring-emerald-500"
+                   />
+                 </div>
+              </div>
+              <div className="flex items-center justify-between pt-2">
+                 <span className="text-[9px] text-slate-500 uppercase tracking-widest font-bold">Điểm KPI</span>
+                 <span className="font-black text-emerald-400 font-mono text-base bg-emerald-500/10 px-3 py-1 rounded-lg">{month15DaysKPI.toFixed(1)}đ</span>
+              </div>
+            </div>
+
+            <div className="bg-slate-800/20 border border-white/5 rounded-2xl p-4 flex flex-col gap-3 group hover:bg-white/[0.02] transition-colors">
+              <div className="flex items-center justify-between border-b border-white/5 pb-2">
+                 <span className="text-sm font-black text-white leading-tight uppercase tracking-widest">SKU ({settings.kpiWeights?.sku || 7.5}đ)</span>
+                 <span className="text-[10px] text-slate-500 font-mono">Tính theo bậc điểm</span>
+              </div>
+              <div className="grid grid-cols-2 gap-3 items-end">
+                 <div className="col-span-2 sm:col-span-1 flex flex-col gap-1.5">
+                   <span className="text-[10px] font-bold text-slate-500 uppercase tracking-widest">Điểm SKU hiện tại</span>
+                   <input 
+                     type="number" value={month.skuActual || ''} onChange={handleNumChange(updateMonth, currentMonthIndex, 'skuActual')}
+                     className="bg-white/5 border border-white/10 rounded-xl px-3 py-2 w-full text-sm text-white font-mono outline-none focus:ring-1 focus:ring-emerald-500"
+                   />
+                 </div>
+              </div>
+              <div className="flex items-center justify-between pt-2">
+                 <span className="text-[9px] text-slate-500 uppercase tracking-widest font-bold">Điểm KPI</span>
+                 <span className="font-black text-emerald-400 font-mono text-base bg-emerald-500/10 px-3 py-1 rounded-lg">{monthSKUKPI.toFixed(1)}đ</span>
+              </div>
+            </div>
+
+            <div className="bg-slate-800/20 border border-white/5 rounded-2xl p-4 flex flex-col gap-3 group hover:bg-white/[0.02] transition-colors">
+              <div className="flex items-center justify-between border-b border-white/5 pb-2">
+                 <input 
+                   type="text" value={month.customName} onChange={handleStrChange(updateMonth, currentMonthIndex, 'customName')} placeholder="Nhập tên tiêu chí bổ sung..."
+                   className="bg-transparent border-none w-full text-sm font-black text-white leading-tight uppercase tracking-widest outline-none placeholder:text-slate-600"
+                 />
+              </div>
+              <div className="grid grid-cols-2 gap-3 items-end">
+                 <div className="col-span-2 sm:col-span-1 flex flex-col gap-1.5">
+                   <span className="text-[10px] font-bold text-slate-500 uppercase tracking-widest">Điểm thưởng/phạt</span>
+                   <input 
+                     type="number" value={month.customPoints === 0 ? '' : month.customPoints} onChange={handleNumChange(updateMonth, currentMonthIndex, 'customPoints')} placeholder="Điểm"
+                     className="bg-white/5 border border-white/10 rounded-xl px-3 py-2 w-full text-sm text-white font-mono outline-none focus:ring-1 focus:ring-emerald-500"
+                   />
+                 </div>
+              </div>
+              <div className="flex items-center justify-between pt-2">
+                 <span className="text-[9px] text-slate-500 uppercase tracking-widest font-bold">Tổng Điểm KPI</span>
+                 <span className="font-black text-emerald-400 font-mono text-base bg-emerald-500/10 px-3 py-1 rounded-lg">{(month.customPoints || 0).toFixed(1)}đ</span>
+              </div>
+            </div>
           </TableGroup>
         </motion.div>
 
@@ -270,40 +280,49 @@ export default function DataEntry() {
               ratio={quarterCoverageRatio}
               point={quarterCoverageKPI.toFixed(1)}
             />
-            <tr className="group hover:bg-white/[0.02] transition-colors border-t border-white/10 border-dashed">
-              <td className="py-3 pr-2" colSpan={2}>
-                <input 
-                  type="text" value={quarterCustom.custom1Name} onChange={handleStrChange(updateQuarter, currentQuarterIndex, 'custom1Name')} placeholder="Tiêu chí 3..."
-                  className="bg-transparent border-b border-white/10 px-1 py-1 w-full text-[11px] text-slate-300 outline-none focus:border-emerald-500 placeholder:text-slate-600"
-                />
-              </td>
-              <td className="py-3 pr-2">
-                <input 
-                  type="number" value={quarterCustom.custom1Points === 0 ? '' : quarterCustom.custom1Points} onChange={handleNumChange(updateQuarter, currentQuarterIndex, 'custom1Points')} placeholder="Điểm"
-                  className="bg-white/10 border border-white/10 rounded px-2 py-1.5 w-full text-xs text-white font-mono min-w-[60px] outline-none focus:ring-1 focus:ring-emerald-500"
-                />
-              </td>
-              <td className="py-3 text-right">
-                <span className="font-bold text-emerald-400 font-mono text-sm">{(quarterCustom.custom1Points || 0).toFixed(1)}</span>
-              </td>
-            </tr>
-            <tr className="group hover:bg-white/[0.02] transition-colors border-t border-white/10 border-dashed">
-              <td className="py-3 pr-2" colSpan={2}>
-                <input 
-                  type="text" value={quarterCustom.custom2Name} onChange={handleStrChange(updateQuarter, currentQuarterIndex, 'custom2Name')} placeholder="Tiêu chí 4..."
-                  className="bg-transparent border-b border-white/10 px-1 py-1 w-full text-[11px] text-slate-300 outline-none focus:border-emerald-500 placeholder:text-slate-600"
-                />
-              </td>
-              <td className="py-3 pr-2">
-                <input 
-                  type="number" value={quarterCustom.custom2Points === 0 ? '' : quarterCustom.custom2Points} onChange={handleNumChange(updateQuarter, currentQuarterIndex, 'custom2Points')} placeholder="Điểm"
-                  className="bg-white/10 border border-white/10 rounded px-2 py-1.5 w-full text-xs text-white font-mono min-w-[60px] outline-none focus:ring-1 focus:ring-emerald-500"
-                />
-              </td>
-              <td className="py-3 text-right">
-                <span className="font-bold text-emerald-400 font-mono text-sm">{(quarterCustom.custom2Points || 0).toFixed(1)}</span>
-              </td>
-            </tr>
+            <div className="bg-slate-800/20 border border-white/5 rounded-2xl p-4 flex flex-col gap-3 group hover:bg-white/[0.02] transition-colors">
+              <div className="flex items-center justify-between border-b border-white/5 pb-2">
+                 <input 
+                   type="text" value={quarterCustom.custom1Name} onChange={handleStrChange(updateQuarter, currentQuarterIndex, 'custom1Name')} placeholder="Tiêu chí bổ sung 1..."
+                   className="bg-transparent border-none w-full text-sm font-black text-white leading-tight uppercase tracking-widest outline-none placeholder:text-slate-600"
+                 />
+              </div>
+              <div className="grid grid-cols-2 gap-3 items-end">
+                 <div className="col-span-2 sm:col-span-1 flex flex-col gap-1.5">
+                   <span className="text-[10px] font-bold text-slate-500 uppercase tracking-widest">Điểm thưởng/phạt</span>
+                   <input 
+                     type="number" value={quarterCustom.custom1Points === 0 ? '' : quarterCustom.custom1Points} onChange={handleNumChange(updateQuarter, currentQuarterIndex, 'custom1Points')} placeholder="Điểm"
+                     className="bg-white/5 border border-white/10 rounded-xl px-3 py-2 w-full text-sm text-white font-mono outline-none focus:ring-1 focus:ring-emerald-500"
+                   />
+                 </div>
+              </div>
+              <div className="flex items-center justify-between pt-2">
+                 <span className="text-[9px] text-slate-500 uppercase tracking-widest font-bold">Tổng Điểm KPI</span>
+                 <span className="font-black text-emerald-400 font-mono text-base bg-emerald-500/10 px-3 py-1 rounded-lg">{(quarterCustom.custom1Points || 0).toFixed(1)}đ</span>
+              </div>
+            </div>
+
+            <div className="bg-slate-800/20 border border-white/5 rounded-2xl p-4 flex flex-col gap-3 group hover:bg-white/[0.02] transition-colors">
+              <div className="flex items-center justify-between border-b border-white/5 pb-2">
+                 <input 
+                   type="text" value={quarterCustom.custom2Name} onChange={handleStrChange(updateQuarter, currentQuarterIndex, 'custom2Name')} placeholder="Tiêu chí bổ sung 2..."
+                   className="bg-transparent border-none w-full text-sm font-black text-white leading-tight uppercase tracking-widest outline-none placeholder:text-slate-600"
+                 />
+              </div>
+              <div className="grid grid-cols-2 gap-3 items-end">
+                 <div className="col-span-2 sm:col-span-1 flex flex-col gap-1.5">
+                   <span className="text-[10px] font-bold text-slate-500 uppercase tracking-widest">Điểm thưởng/phạt</span>
+                   <input 
+                     type="number" value={quarterCustom.custom2Points === 0 ? '' : quarterCustom.custom2Points} onChange={handleNumChange(updateQuarter, currentQuarterIndex, 'custom2Points')} placeholder="Điểm"
+                     className="bg-white/5 border border-white/10 rounded-xl px-3 py-2 w-full text-sm text-white font-mono outline-none focus:ring-1 focus:ring-emerald-500"
+                   />
+                 </div>
+              </div>
+              <div className="flex items-center justify-between pt-2">
+                 <span className="text-[9px] text-slate-500 uppercase tracking-widest font-bold">Tổng Điểm KPI</span>
+                 <span className="font-black text-emerald-400 font-mono text-base bg-emerald-500/10 px-3 py-1 rounded-lg">{(quarterCustom.custom2Points || 0).toFixed(1)}đ</span>
+              </div>
+            </div>
           </TableGroup>
         </motion.div>
 
@@ -323,23 +342,27 @@ export default function DataEntry() {
               ratio={halfCoverageRatio}
               point={halfCoverageKPI.toFixed(1)}
             />
-            <tr className="group hover:bg-white/[0.02] transition-colors border-t border-white/10 border-dashed">
-              <td className="py-3 pr-2" colSpan={2}>
-                <input 
-                  type="text" value={halfCustom.customName} onChange={handleStrChange(updateHalfYear, currentHalfYearIndex, 'customName')} placeholder="Tiêu chí cuối (10đ)..."
-                  className="bg-transparent border-b border-white/10 px-1 py-1 w-full text-[11px] text-slate-300 outline-none focus:border-emerald-500 placeholder:text-slate-600"
-                />
-              </td>
-              <td className="py-3 pr-2">
-                <input 
-                  type="number" value={halfCustom.customPoints === 0 ? '' : halfCustom.customPoints} onChange={handleNumChange(updateHalfYear, currentHalfYearIndex, 'customPoints')} placeholder="Điểm"
-                  className="bg-white/10 border border-white/10 rounded px-2 py-1.5 w-full text-xs text-white font-mono min-w-[60px] outline-none focus:ring-1 focus:ring-emerald-500"
-                />
-              </td>
-              <td className="py-3 text-right">
-                <span className="font-bold text-emerald-400 font-mono text-sm">{(halfCustom.customPoints || 0).toFixed(1)}</span>
-              </td>
-            </tr>
+            <div className="bg-slate-800/20 border border-white/5 rounded-2xl p-4 flex flex-col gap-3 group hover:bg-white/[0.02] transition-colors">
+              <div className="flex items-center justify-between border-b border-white/5 pb-2">
+                 <input 
+                   type="text" value={halfCustom.customName} onChange={handleStrChange(updateHalfYear, currentHalfYearIndex, 'customName')} placeholder="Tiêu chí cuối (10đ)..."
+                   className="bg-transparent border-none w-full text-sm font-black text-white leading-tight uppercase tracking-widest outline-none placeholder:text-slate-600"
+                 />
+              </div>
+              <div className="grid grid-cols-2 gap-3 items-end">
+                 <div className="col-span-2 sm:col-span-1 flex flex-col gap-1.5">
+                   <span className="text-[10px] font-bold text-slate-500 uppercase tracking-widest">Điểm thưởng/phạt</span>
+                   <input 
+                     type="number" value={halfCustom.customPoints === 0 ? '' : halfCustom.customPoints} onChange={handleNumChange(updateHalfYear, currentHalfYearIndex, 'customPoints')} placeholder="Điểm"
+                     className="bg-white/5 border border-white/10 rounded-xl px-3 py-2 w-full text-sm text-white font-mono outline-none focus:ring-1 focus:ring-emerald-500"
+                   />
+                 </div>
+              </div>
+              <div className="flex items-center justify-between pt-2">
+                 <span className="text-[9px] text-slate-500 uppercase tracking-widest font-bold">Tổng Điểm KPI</span>
+                 <span className="font-black text-emerald-400 font-mono text-base bg-emerald-500/10 px-3 py-1 rounded-lg">{(halfCustom.customPoints || 0).toFixed(1)}đ</span>
+              </div>
+            </div>
           </TableGroup>
         </motion.div>
       </div>

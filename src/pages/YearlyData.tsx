@@ -113,81 +113,77 @@ export default function YearlyData() {
           </div>
         </div>
 
-        <div className="bg-slate-900/40 rounded-[2rem] p-3 shadow-2xl border border-white/5 backdrop-blur-xl flex flex-col overflow-hidden w-full">
-          <div className="flex justify-between items-center mb-4 px-2 mt-2">
+        <div className="bg-slate-900/40 rounded-[2rem] p-4 shadow-2xl border border-white/5 backdrop-blur-xl flex flex-col overflow-hidden w-full">
+          <div className="flex justify-between items-center mb-4 px-2">
             <h3 className="text-sm font-bold flex items-center gap-2 text-white uppercase tracking-widest">
               <span className="w-1.5 h-6 bg-purple-500 rounded-full"></span>
               Cấu hình 12 Tháng
             </h3>
           </div>
-          <div className="overflow-x-auto -mx-3 px-3 sm:mx-0 sm:px-0 pb-2">
-            <table className="w-full text-xs text-left min-w-[340px]">
-              <thead className="text-slate-500 uppercase border-b border-white/10">
-                <tr className="text-[10px]">
-                  <th className="pb-2 font-medium w-1/12">Tháng</th>
-                  <th className="pb-2 font-medium w-3/12">Loại</th>
-                  <th className="pb-2 font-medium w-3/12">Khoán</th>
-                  <th className="pb-2 font-medium w-3/12">Thực đạt</th>
-                  <th className="pb-2 text-right font-medium w-2/12">Tỷ lệ</th>
-                </tr>
-              </thead>
-              <tbody className="text-slate-300">
-                {months.map((monthData, i) => {
-                  const salesRatio = formatPercent(monthData.salesActual, monthData.salesTarget);
-                  const coverageRatio = formatPercent(monthData.coverageActual, monthData.coverageTarget);
+          
+          <div className="space-y-3">
+            {months.map((monthData, i) => {
+              const salesRatio = formatPercent(monthData.salesActual, monthData.salesTarget);
+              const coverageRatio = formatPercent(monthData.coverageActual, monthData.coverageTarget);
+              
+              return (
+                <div key={i} className="bg-slate-800/20 border border-white/5 rounded-2xl p-4 flex flex-col gap-3">
+                  <div className="flex items-center justify-between border-b border-white/5 pb-2">
+                    <span className="text-sm font-black text-white uppercase tracking-widest">Tháng {i + 1}</span>
+                  </div>
                   
-                  return (
-                    <Fragment key={i}>
-                      <tr className="group hover:bg-white/[0.02] transition-colors border-t border-white/5">
-                        <td rowSpan={2} className="py-3 pr-2 font-bold text-[11px] leading-tight text-white uppercase align-top border-b border-white/5">T{i + 1}</td>
-                        <td className="py-2 pr-2 text-[10px] text-slate-400">Doanh số</td>
-                        <td className="py-2 pr-1">
-                          <input 
-                            type="number"
-                            value={monthData.salesTarget === 0 && !monthData.salesTarget ? '' : monthData.salesTarget}
-                            onChange={handleNumChange(i, 'salesTarget')}
-                            className="bg-slate-800/50 border border-white/10 rounded px-2 py-1 w-full text-[11px] text-purple-400 font-mono focus:ring-1 focus:ring-purple-500 outline-none min-w-[50px]"
-                          />
-                        </td>
-                        <td className="py-2 pr-1">
-                          <input 
-                            type="number"
-                            value={monthData.salesActual === 0 && !monthData.salesActual ? '' : monthData.salesActual}
-                            onChange={handleNumChange(i, 'salesActual')}
-                            className="bg-white/10 border border-white/10 rounded px-2 py-1 w-full text-[11px] text-white font-mono focus:ring-1 focus:ring-purple-500 outline-none min-w-[50px]"
-                          />
-                        </td>
-                        <td className="py-2 text-right pr-2">
-                          <span className="text-[10px] text-emerald-400 font-mono">{salesRatio}</span>
-                        </td>
-                      </tr>
-                      <tr className="group hover:bg-white/[0.02] transition-colors border-b border-white/5">
-                        <td className="py-2 pr-2 text-[10px] text-slate-400">Bao phủ</td>
-                        <td className="py-2 pr-1">
-                          <input 
-                            type="number"
-                            value={monthData.coverageTarget === 0 && !monthData.coverageTarget ? '' : monthData.coverageTarget}
-                            onChange={handleNumChange(i, 'coverageTarget')}
-                            className="bg-slate-800/50 border border-white/10 rounded px-2 py-1 w-full text-[11px] text-purple-400 font-mono focus:ring-1 focus:ring-purple-500 outline-none min-w-[50px]"
-                          />
-                        </td>
-                        <td className="py-2 pr-1">
-                          <input 
-                            type="number"
-                            value={monthData.coverageActual === 0 && !monthData.coverageActual ? '' : monthData.coverageActual}
-                            onChange={handleNumChange(i, 'coverageActual')}
-                            className="bg-white/10 border border-white/10 rounded px-2 py-1 w-full text-[11px] text-white font-mono focus:ring-1 focus:ring-purple-500 outline-none min-w-[50px]"
-                          />
-                        </td>
-                        <td className="py-2 text-right pr-2">
-                          <span className="text-[10px] text-emerald-400 font-mono">{coverageRatio}</span>
-                        </td>
-                      </tr>
-                    </Fragment>
-                  );
-                })}
-              </tbody>
-            </table>
+                  <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                    {/* Doanh số */}
+                    <div className="flex flex-col gap-1.5">
+                      <div className="flex items-center justify-between">
+                         <span className="text-[10px] text-slate-400 font-bold uppercase tracking-widest">Doanh số</span>
+                         <span className="text-[10px] text-emerald-400 font-mono font-bold bg-emerald-500/10 px-2 py-0.5 rounded-full">{salesRatio}</span>
+                      </div>
+                      <div className="flex gap-2">
+                         <input 
+                           type="number"
+                           placeholder="Khoán"
+                           value={monthData.salesTarget === 0 && !monthData.salesTarget ? '' : monthData.salesTarget}
+                           onChange={handleNumChange(i, 'salesTarget')}
+                           className="bg-slate-800/50 border border-white/10 rounded-xl px-3 py-2 w-full text-xs text-purple-400 font-mono focus:ring-1 focus:ring-purple-500 outline-none"
+                         />
+                         <input 
+                           type="number"
+                           placeholder="Thực đạt"
+                           value={monthData.salesActual === 0 && !monthData.salesActual ? '' : monthData.salesActual}
+                           onChange={handleNumChange(i, 'salesActual')}
+                           className="bg-white/5 border border-white/10 rounded-xl px-3 py-2 w-full text-xs text-white font-mono focus:ring-1 focus:ring-purple-500 outline-none"
+                         />
+                      </div>
+                    </div>
+
+                    {/* Bao phủ */}
+                    <div className="flex flex-col gap-1.5">
+                      <div className="flex items-center justify-between">
+                         <span className="text-[10px] text-slate-400 font-bold uppercase tracking-widest">Bao phủ</span>
+                         <span className="text-[10px] text-emerald-400 font-mono font-bold bg-emerald-500/10 px-2 py-0.5 rounded-full">{coverageRatio}</span>
+                      </div>
+                      <div className="flex gap-2">
+                         <input 
+                           type="number"
+                           placeholder="Khoán"
+                           value={monthData.coverageTarget === 0 && !monthData.coverageTarget ? '' : monthData.coverageTarget}
+                           onChange={handleNumChange(i, 'coverageTarget')}
+                           className="bg-slate-800/50 border border-white/10 rounded-xl px-3 py-2 w-full text-xs text-purple-400 font-mono focus:ring-1 focus:ring-purple-500 outline-none"
+                         />
+                         <input 
+                           type="number"
+                           placeholder="Thực đạt"
+                           value={monthData.coverageActual === 0 && !monthData.coverageActual ? '' : monthData.coverageActual}
+                           onChange={handleNumChange(i, 'coverageActual')}
+                           className="bg-white/5 border border-white/10 rounded-xl px-3 py-2 w-full text-xs text-white font-mono focus:ring-1 focus:ring-purple-500 outline-none"
+                         />
+                      </div>
+                    </div>
+                  </div>
+                </div>
+              );
+            })}
           </div>
         </div>
       </div>

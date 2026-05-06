@@ -261,32 +261,29 @@ export default function Notes() {
       animate="animate"
       className="space-y-6 px-5 pt-8 pb-32"
     >
-      <motion.div variants={itemVariants} className="flex items-center justify-between pointer-events-none">
-        <div className="flex items-center gap-2">
-          <span className="w-2 h-2 bg-yellow-500 rounded-full"></span>
-          <span className="text-[10px] text-slate-400 uppercase tracking-widest font-medium">Trung tâm tri thức</span>
-        </div>
-      </motion.div>
-      
-      <motion.div variants={itemVariants} className="flex items-start justify-between">
-        <h1 className="text-3xl font-black text-white tracking-tight uppercase italic underline decoration-yellow-500/30 decoration-4 underline-offset-8">
-           Archives <span className="text-yellow-500">System</span>
-        </h1>
+      <motion.div variants={itemVariants} className="flex flex-col pt-2">
+        <p className="text-[10px] text-slate-500 uppercase tracking-widest font-bold mb-1">Tri thức lưu trữ</p>
+        <h1 className="text-2xl font-black text-white tracking-tight">Ký ức <span className="text-violet-400">AI</span></h1>
       </motion.div>
 
       <motion.div variants={itemVariants} className="flex bg-slate-900/50 p-1.5 rounded-2xl mb-6 border border-white/5 backdrop-blur-xl">
         <button
           onClick={() => setActiveTab('notes')}
-          className={`flex-1 py-2.5 rounded-xl text-xs font-black uppercase tracking-widest transition-all ${activeTab === 'notes' ? 'bg-white text-slate-950 shadow-xl' : 'text-slate-400 hover:text-slate-200'}`}
+          className={cn(
+            "flex-1 py-1.5 rounded-xl text-[10px] font-black uppercase tracking-widest transition-all",
+            activeTab === 'notes' ? "bg-slate-800 text-white shadow-xl" : "text-slate-500 hover:text-slate-300"
+          )}
         >
-          Lời nhắc
+          📋 Lời nhắc
         </button>
         <button
           onClick={() => setActiveTab('memories')}
-          className={`flex-1 py-2.5 rounded-xl text-xs font-black uppercase tracking-widest transition-all flex items-center justify-center gap-2 ${activeTab === 'memories' ? 'bg-white text-slate-950 shadow-xl' : 'text-slate-400 hover:text-slate-200'}`}
+          className={cn(
+            "flex-1 py-1.5 rounded-xl text-[10px] font-black uppercase tracking-widest transition-all flex items-center justify-center gap-2",
+            activeTab === 'memories' ? "bg-slate-800 text-white shadow-xl" : "text-slate-500 hover:text-slate-300"
+          )}
         >
-          <BrainCircuit className="w-4 h-4" />
-          Ký ức AI
+          🧠 Ký ức AI
         </button>
       </motion.div>
 

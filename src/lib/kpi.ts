@@ -1,111 +1,72 @@
-import { useAppStore } from '../store';
 
-function getWeights() {
-  const settings = useAppStore.getState().settings;
-  return settings.kpiWeights || { sales: 80, coverage: 10, month15Days: 5, sku: 7.5 };
+export interface KPIWeights {
+  sales: number;
+  coverage: number;
+  month15Days: number;
+  sku: number;
 }
 
-function getRules() {
-  const settings = useAppStore.getState().settings;
-  return settings.kpiRules || {
-    salesThreshold: 0.8,
-    salesMaxMultiplier: 1.875, // 150/80
-    coverageThreshold: 0.8,
-    coverageMaxMultiplier: 1.5,
-    month15DaysTargetRatio: 0.55,
-    month15DaysThreshold: 0.8,
-    month15DaysMaxMultiplier: 1.3636, // 7.5/5.5
-    skuTable: [
-      { min: 4.7, scoreMult: 1 },
-      { min: 4.5, scoreMult: 0.933 },
-      { min: 4.3, scoreMult: 0.866 },
-      { min: 4.1, scoreMult: 0.8 },
-      { min: 3.9, scoreMult: 0.733 },
-      { min: 3.7, scoreMult: 0.666 },
-      { min: 3.5, scoreMult: 0.6 },
-      { min: 3.3, scoreMult: 0.533 },
-      { min: 3.1, scoreMult: 0.466 },
-    ]
-  };
-}
+export const DEFAULT_WEIGHTS: KPIWeights = {
+  sales: 80,
+  coverage: 10,
+  month15Days: 5,
+  sku: 7.5
+};
 
-export function calcSalesKPI(actual: number, target: number): number {
+export function calcSalesKPI(actual: number, target: number, weights: Partial<KPIWeights> = {}) {
   if (!target || target <= 0) return 0;
-  const weights = getWeights();
-  const rules = getRules();
+  const maxPts = weights.sales ?? DEFAULT_WEIGHTS.sales;
   const ratio = actual / target;
-  
-  if (ratio < rules.salesThreshold) return 0;
-  
-  const p = ratio * weights.sales;
-  const max = weights.sales * rules.salesMaxMultiplier;
-  if (p > max) return max;
-  return Number(p.toFixed(2));
+  if (ratio < 0.8) return 0;
+  // Maximum can reach 150% target points (1.875 * 80 = 150)
+  return parseFloat(Math.min(ratio * maxPts, maxPts * 1.875).toFixed(2));
 }
 
-export function calcCoverageKPI(actual: number, target: number, multiplier: number = 1): number {
+export function calcCoverageKPI(actual: number, target: number, weights: Partial<KPIWeights> = {}) {
   if (!target || target <= 0) return 0;
-  const weights = getWeights();
-  const rules = getRules();
-  const baseWeight = weights.coverage; 
+  const maxPts = weights.coverage ?? DEFAULT_WEIGHTS.coverage;
   const ratio = actual / target;
-  
-  if (ratio < rules.coverageThreshold) return 0;
-  
-  const p = ratio * baseWeight * multiplier;
-  const max = baseWeight * multiplier * rules.coverageMaxMultiplier;
-  if (p > max) return max;
-  return Number(p.toFixed(2));
+  if (ratio < 0.8) return 0;
+  // Maximum can reach 150% target points (1.5 * 10 = 15)
+  return parseFloat(Math.min(ratio * maxPts, maxPts * 1.5).toFixed(2));
 }
 
-export function calc15DaysSalesKPI(actual15: number, target: number): number {
-  if (!target || target <= 0) return 0;
-  
-  const ratio = actual15 / target;
-  
-  // Rule: If % progress < 44%, score is 0
+export function calc15DaysKPI(actual15: number, salesTarget: number) {
+  if (!salesTarget || salesTarget <= 0) return 0;
+  const ratio = actual15 / salesTarget;
   if (ratio < 0.44) return 0;
-  
-  // Rule: (progress / 55%) * 5
-  let score = (ratio / 0.55) * 5;
-  
-  // Rule: Max is 7.5 points
-  if (score > 7.5) score = 7.5;
-  
-  return Number(score.toFixed(2));
+  // Based on the rule: 55% target gets 5 points, max 7.5 points
+  return parseFloat(Math.min((ratio / 0.55) * 5, 7.5).toFixed(2));
 }
 
-export function calcSKUKPI(skuVal: number): number {
-  if (!skuVal || skuVal <= 0) return 0;
-  
-  const settings = useAppStore.getState().settings;
-  const tiers = settings.skuTiers || [
-    { threshold: 3.3, score: 4.0 },
-    { threshold: 3.5, score: 4.5 },
-    { threshold: 3.7, score: 5.0 },
-    { threshold: 3.9, score: 5.5 },
-    { threshold: 4.1, score: 6.0 },
-    { threshold: 4.3, score: 6.5 },
+export function calcSKUKPI(sku: number, tiers?: { threshold: number; score: number }[]) {
+  const defaultTiers = [
+    { threshold: 4.7, score: 7.5 },
     { threshold: 4.5, score: 7.0 },
-    { threshold: 4.7, score: 7.5 }
+    { threshold: 4.3, score: 6.5 },
+    { threshold: 4.1, score: 6.0 },
+    { threshold: 3.9, score: 5.5 },
+    { threshold: 3.7, score: 5.0 },
+    { threshold: 3.5, score: 4.5 },
+    { threshold: 3.3, score: 4.0 },
   ];
-
-  // Additional rule: SKU below 3.3 is 0
-  const minThreshold = Math.min(...tiers.map(t => t.threshold));
-  if (skuVal < minThreshold) return 0;
-
-  // Logic: Find the highest threshold that is <= skuVal
-  let finalScore = 0;
   
-  // Sort tiers by threshold descending to find the first match
-  const sortedTiers = [...tiers].sort((a, b) => b.threshold - a.threshold);
+  const sortedTiers = [...(tiers || defaultTiers)].sort((a, b) => b.threshold - a.threshold);
   
   for (const tier of sortedTiers) {
-    if (skuVal >= tier.threshold) {
-      finalScore = tier.score;
-      break;
-    }
+    if (sku >= tier.threshold) return tier.score;
   }
-  
-  return Number(finalScore.toFixed(2));
+  return 0;
 }
+
+export function calcTotalKPI(data: any, weights: Partial<KPIWeights> = {}, skuTiers?: { threshold: number; score: number }[]) {
+  const s = calcSalesKPI(data.salesActual || 0, data.salesTarget || 0, weights);
+  const c = calcCoverageKPI(data.coverageActual || 0, data.coverageTarget || 0, weights);
+  const d15 = calc15DaysKPI(data.sales15DaysActual || 0, data.salesTarget || 0);
+  const sku = calcSKUKPI(data.skuActual || 0, skuTiers);
+  
+  return parseFloat((s + c + d15 + sku + (data.customPoints || 0)).toFixed(2));
+}
+
+export const MONTHS_VI = ["T1", "T2", "T3", "T4", "T5", "T6", "T7", "T8", "T9", "T10", "T11", "T12"];
+export const FULL_MONTHS_VI = ["Tháng 1", "Tháng 2", "Tháng 3", "Tháng 4", "Tháng 5", "Tháng 6", "Tháng 7", "Tháng 8", "Tháng 9", "Tháng 10", "Tháng 11", "Tháng 12"];

@@ -1,6 +1,6 @@
-import React from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 import { motion, useMotionValue, useTransform } from 'motion/react';
-import { CheckCircle2, Zap, Archive, ArrowRight, Sparkles } from 'lucide-react';
+import { CheckCircle2, Zap, Archive, ArrowRight, Sparkles, Play, Pause } from 'lucide-react';
 import { cn } from '../lib/utils';
 import { DailyTask, useAppStore } from '../store';
 
@@ -11,27 +11,43 @@ interface ActionCardProps {
 }
 
 export const ActionCard: React.FC<ActionCardProps> = ({ task, onToggle, index }) => {
-  const { startDailyTask } = useAppStore();
+  const { startDailyTask, updateDailyTaskProgress, addToast } = useAppStore();
   const x = useMotionValue(0);
-  
+  const [isTimerRunning, setIsTimerRunning] = useState(false);
+  const timerRef = useRef<NodeJS.Timeout | null>(null);
+
+  // Simple timer logic
+  useEffect(() => {
+    if (isTimerRunning) {
+      timerRef.current = setInterval(() => {
+        // We probably should store elapsed time in state if we want to persist it properly, 
+        // but for now let's just keep it simple and maybe update store once in a while.
+      }, 1000);
+    } else if (timerRef.current) {
+      clearInterval(timerRef.current);
+    }
+    return () => { if (timerRef.current) clearInterval(timerRef.current); };
+  }, [isTimerRunning]);
+
   // Transform values based on drag gesture
   const background = useTransform(
     x,
     [-100, 0, 100],
     ["rgba(239, 68, 68, 0.15)", "rgba(15, 23, 42, 0)", "rgba(34, 197, 94, 0.15)"]
   );
-  
+
   const handleDragEnd = (_: any, info: any) => {
     if (info.offset.x > 100) {
       onToggle(task.id);
-      x.set(0);
-    } else if (info.offset.x < -100) {
-      // Optional Skip
+      addToast({ type: 'success', message: task.isCompleted ? 'Nhiệm vụ đã được đánh dấu chưa xong' : 'Chúc mừng! Nhiệm vụ đã hoàn tất' });
       x.set(0);
     } else {
       x.set(0);
     }
   };
+
+  const typeColor = { coverage: "text-emerald-400", sales: "text-blue-400", sku: "text-purple-400", other: "text-slate-400" }[task.type || 'other'] || "text-slate-400";
+  const typeBg = { coverage: "bg-emerald-500/10", sales: "bg-blue-500/10", sku: "bg-purple-500/10", other: "bg-slate-500/10" }[task.type || 'other'] || "bg-slate-500/10";
 
   const confidenceColor = (task.confidence || 0) > 0.8 ? "text-emerald-400" : (task.confidence || 0) > 0.6 ? "text-yellow-400" : "text-slate-500";
 
@@ -71,7 +87,7 @@ export const ActionCard: React.FC<ActionCardProps> = ({ task, onToggle, index })
           <div className="flex items-center gap-3">
              <div className={cn(
                "p-2.5 rounded-2xl",
-               task.priority === 'high' ? "bg-red-500/10 text-red-400" : "bg-slate-800 text-slate-500"
+               typeBg, typeColor
              )}>
                 <Zap className={cn("w-4 h-4 fill-current", !task.isCompleted && task.priority === 'high' && "animate-pulse")} />
              </div>
@@ -86,15 +102,25 @@ export const ActionCard: React.FC<ActionCardProps> = ({ task, onToggle, index })
              </div>
           </div>
           
-          {task.confidence && (
-            <div className="flex flex-col items-end">
-               <div className="flex items-center gap-1.5 mb-1">
-                  <Sparkles className={cn("w-3 h-3", confidenceColor)} />
-                  <span className={cn("text-[11px] font-black leading-none", confidenceColor)}>{Math.round(task.confidence * 100)}%</span>
-               </div>
-               <span className="text-[7px] text-slate-600 font-black uppercase tracking-tighter">Confidence</span>
-            </div>
-          )}
+          <div className="flex items-center gap-4">
+            {!task.isCompleted && task.isStarted && (
+              <button 
+                onClick={(e) => { e.stopPropagation(); setIsTimerRunning(!isTimerRunning); }}
+                className={cn("p-2 rounded-xl transition-all", isTimerRunning ? "bg-blue-500/20 text-blue-400" : "bg-slate-800 text-slate-400")}
+              >
+                {isTimerRunning ? <Pause className="w-4 h-4" /> : <Play className="w-4 h-4" />}
+              </button>
+            )}
+            {task.confidence && (
+              <div className="flex flex-col items-end">
+                 <div className="flex items-center gap-1.5 mb-1">
+                    <Sparkles className={cn("w-3 h-3", confidenceColor)} />
+                    <span className={cn("text-[11px] font-black leading-none", confidenceColor)}>{Math.round(task.confidence * 100)}%</span>
+                 </div>
+                 <span className="text-[7px] text-slate-600 font-black uppercase tracking-tighter">Confidence</span>
+              </div>
+            )}
+          </div>
         </div>
 
         <div className="flex-1 mb-6">
@@ -108,6 +134,24 @@ export const ActionCard: React.FC<ActionCardProps> = ({ task, onToggle, index })
              <Sparkles className="w-3 h-3 text-emerald-500" />
              <span className="text-[10px] font-black text-emerald-400 uppercase tracking-tighter">Tác động: {task.expectedImpact}</span>
           </div>
+          
+          {/* Progress Slider Integration */}
+          {!task.isCompleted && task.target && task.target > 1 && task.isStarted && (
+            <div className="mt-5 space-y-2">
+              <div className="flex justify-between items-center">
+                <span className="text-[9px] font-black text-slate-500 uppercase tracking-widest">Tiến độ: {task.done}/{task.target}</span>
+                <span className="text-[10px] font-black text-white font-mono">{Math.round((task.done / task.target) * 100)}%</span>
+              </div>
+              <input 
+                type="range" 
+                min="0" 
+                max={task.target} 
+                value={task.done}
+                onChange={(e) => { e.stopPropagation(); updateDailyTaskProgress(task.id, parseInt(e.target.value)); }}
+                className="w-full h-1 bg-slate-800 rounded-lg appearance-none cursor-pointer accent-blue-500"
+              />
+            </div>
+          )}
         </div>
 
         <div className="flex items-center gap-4 pt-4 border-t border-white/5 mt-auto">
