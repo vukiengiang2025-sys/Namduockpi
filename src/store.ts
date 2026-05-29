@@ -92,60 +92,6 @@ export interface DailyTask {
   type?: 'coverage' | 'sales' | 'sku' | 'other';
 }
 
-export interface WeeklyReport {
-  id: string;
-  startDate: string;
-  endDate: string;
-  monthIndex: number;
-  stats: {
-    avgKpiScore: number;
-    salesGrowth: number;
-    tasksCompletionRate: number;
-    topPerformers: string[];
-    attribution: {
-      organic: number;
-      effort: number;
-    };
-  };
-  analysis: {
-    why: string;
-    focus: string;
-    actionPlan: string[];
-    bestActionType: string;
-  };
-  createdAt: number;
-}
-
-export interface AIAction {
-  task: string;
-  priority: 'high' | 'medium' | 'low';
-  target?: number;
-  impact?: string;
-  expectedImpact?: string;
-  confidence: number;
-  confidenceDetails?: {
-    dataQuality: number;
-    historicalSupport: number;
-    memoryMatch: number;
-  };
-  type?: 'coverage' | 'sales' | 'sku' | 'other';
-}
-
-export interface AIInsight {
-  status: 'tốt' | 'nguy hiểm' | 'rất nguy hiểm' | string;
-  main_issue: string;
-  actions: AIAction[];
-  daily_target?: string;
-  references?: string[];
-  riskAlert?: string;
-  prediction?: {
-    estimatedFinish: number;
-    gapToGoal: number;
-    trend: 'up' | 'down' | 'stable';
-    message: string;
-  };
-}
-
 export interface DailySnapshot {
   date: string;
   timestamp: number;
@@ -166,8 +112,6 @@ export interface KPIWeights {
 }
 
 export interface AppSettings {
-  geminiKey: string;
-  geminiModel?: string;
   themeColor: string;
   appTitle?: string;
   appIcon?: string;
@@ -201,13 +145,11 @@ interface AppState {
   memories: Memory[];
   dailyTasks: DailyTask[];
   dailySnapshots: DailySnapshot[];
-  weeklyReports: WeeklyReport[];
   taskLogs: TaskLog[];
   strategyLogs: StrategyLog[];
   streak: number;
   toasts: Toast[];
   userProfile: UserProfile;
-  lastInsight: AIInsight | null;
   settings: AppSettings;
   updateMonth: (index: number, data: Partial<MonthData>) => void;
   updateQuarter: (index: number, data: Partial<QuarterData>) => void;
@@ -224,11 +166,9 @@ interface AppState {
   startDailyTask: (id: string) => void;
   updateDailyTaskProgress: (id: string, done: number) => void;
   addDailySnapshot: (snapshot: DailySnapshot) => void;
-  addWeeklyReport: (report: WeeklyReport) => void;
   logTask: (log: Omit<TaskLog, 'id' | 'timestamp'>) => void;
   addStrategyLog: (log: Omit<StrategyLog, 'id' | 'timestamp'>) => void;
   updateUserProfile: (profile: Partial<UserProfile>) => void;
-  setLastInsight: (insight: AIInsight | null) => void;
   updateSettings: (settings: Partial<AppSettings>) => void;
   addToast: (toast: Omit<Toast, 'id'>) => void;
   removeToast: (id: string) => void;
@@ -242,7 +182,6 @@ export const useAppStore = create<AppState>()(
       memories: [],
       dailyTasks: [],
       dailySnapshots: [],
-      weeklyReports: [],
       taskLogs: [],
       strategyLogs: [],
       streak: 0,
@@ -258,10 +197,7 @@ export const useAppStore = create<AppState>()(
           afternoon: 0.8
         }
       },
-      lastInsight: null,
       settings: {
-        geminiKey: '',
-        geminiModel: 'gemini-3-flash-preview',
         themeColor: 'blue',
         appTitle: 'NAMDUOC KPI',
         customPrompts: {
@@ -324,7 +260,6 @@ export const useAppStore = create<AppState>()(
         memories: data.memories || state.memories,
         settings: data.settings || state.settings,
         dailySnapshots: data.dailySnapshots || state.dailySnapshots,
-        weeklyReports: data.weeklyReports || state.weeklyReports,
         taskLogs: data.taskLogs || state.taskLogs,
         strategyLogs: data.strategyLogs || state.strategyLogs,
         userProfile: data.userProfile || state.userProfile
@@ -368,9 +303,6 @@ export const useAppStore = create<AppState>()(
       addDailySnapshot: (snapshot) => set((state) => ({
         dailySnapshots: [...state.dailySnapshots.filter(s => s.date !== snapshot.date), snapshot].slice(-60)
       })),
-      addWeeklyReport: (report) => set((state) => ({
-        weeklyReports: [report, ...state.weeklyReports].slice(0, 52)
-      })),
       logTask: (log) => set((state) => ({
         taskLogs: [{ ...log, id: crypto.randomUUID().slice(0, 8), timestamp: Date.now() }, ...state.taskLogs].slice(0, 100)
       })),
@@ -380,7 +312,6 @@ export const useAppStore = create<AppState>()(
       updateUserProfile: (profile) => set((state) => ({
         userProfile: { ...state.userProfile, ...profile }
       })),
-      setLastInsight: (lastInsight) => set({ lastInsight }),
       updateSettings: (settings) => set((state) => ({
         settings: { ...state.settings, ...settings }
       })),

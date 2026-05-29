@@ -1,4 +1,3 @@
-import { Link } from 'react-router-dom';
 import { useAppStore, DailyTask } from '../store';
 import { calc15DaysKPI, calcCoverageKPI, calcSalesKPI, calcSKUKPI, calcTotalKPI, FULL_MONTHS_VI } from '../lib/kpi';
 import { formatPercent, cn } from '../lib/utils';
@@ -13,7 +12,6 @@ import {
 import React, { useRef, useState, useMemo } from 'react';
 import * as XLSX from 'xlsx';
 import { APP_ICONS } from './Settings';
-import { getAIInsight } from '../services/aiService';
 import DataEntry from './DataEntry';
 import Notes from './Notes';
 
@@ -21,17 +19,15 @@ import { ProgressCircle } from '../components/ProgressCircle';
 import { CommandMetric } from '../components/CommandMetric';
 import { ActionCard } from '../components/ActionCard';
 
-
 import { saveFile } from '../lib/fileSystem';
 
 export default function Dashboard() {
   const { 
     months, selectedMonthIndex, setSelectedMonthIndex, settings,
-    dailyTasks, setDailyTasks, toggleDailyTask, lastInsight, setLastInsight, memories,
+    dailyTasks, setDailyTasks, toggleDailyTask, notes,
     streak, updateDailyTaskProgress, startDailyTask
   } = useAppStore();
   
-  const [isAnalyzing, setIsAnalyzing] = useState(false);
   const [isDataEntryOpen, setIsDataEntryOpen] = useState(false);
 
   const realCurrentMonthIndex = new Date().getMonth();
@@ -129,38 +125,6 @@ export default function Dashboard() {
   const coverageStatus = getStatus(coverageRatio);
   const skuStatus = getStatus(skuRatio, 100);
 
-  const handleAnalyze = async () => {
-    setIsAnalyzing(true);
-    setLastInsight(null);
-    try {
-      const result = await getAIInsight(
-        salesRatio,
-        timeElapsedRatio,
-        (salesRatio / timeElapsedRatio) * 100,
-        month.skuActual || 0,
-        month.coverageActual || 0,
-        daysInMonth - currentDay,
-        month.salesActual / (currentDay || 1),
-        (Math.max(0, (month.salesTarget || 0) - month.salesActual)) / (Math.max(1, daysInMonth - currentDay))
-      );
-      setLastInsight(result);
-      if (result.actions && result.actions.length > 0) {
-        setDailyTasks(result.actions.map(act => ({
-          text: act.task,
-          priority: act.priority,
-          target: act.target,
-          expectedImpact: act.impact,
-          confidence: act.confidence,
-          type: act.type
-        })), monthTotalKPI);
-      }
-    } catch (error: any) {
-      console.error(error);
-    } finally {
-      setIsAnalyzing(false);
-    }
-  };
-
   const handleExportExcel = () => {
     // Export full year data
     const kpiData = months.map((m, i) => {
@@ -210,14 +174,14 @@ export default function Dashboard() {
     XLSX.utils.book_append_sheet(wb, wsDetail, `Chi tiết Tháng ${currentMonthIndex + 1}`);
 
     // Notes/Memories sheet
-    const notesData = memories.map(m => ({
-      'Tiêu đề': m.title,
-      'Tóm tắt': m.summary,
+    const notesData = notes.map(m => ({
+      'Tiêu đề': m.text,
       'Ngày nạp': new Date(m.createdAt).toLocaleDateString('vi-VN'),
-      'Tags': m.tags?.join(', ')
+      'Hình thức': m.reminderType,
+      'Tags': m.tag
     }));
     const wsNotes = XLSX.utils.json_to_sheet(notesData);
-    XLSX.utils.book_append_sheet(wb, wsNotes, "Ghi nhớ AI");
+    XLSX.utils.book_append_sheet(wb, wsNotes, "Ghi chú");
 
     XLSX.writeFile(wb, `BaoCao_NamDuoc_T${currentMonthIndex + 1}_${new Date().toISOString().split('T')[0]}.xlsx`);
   };
@@ -314,14 +278,6 @@ export default function Dashboard() {
                    Thiếu <span className="text-white">{(month.salesTarget - projectedSalesEndOfMonth).toLocaleString()}đ</span> nếu không bứt phá.
                  </p>
               </div>
-              <motion.button 
-                whileHover={{ scale: 1.05, boxShadow: "0 0 20px rgba(239, 68, 68, 0.4)" }}
-                whileTap={{ scale: 0.95 }}
-                onClick={handleAnalyze}
-                className="px-8 py-4 bg-red-500 text-white rounded-2xl font-black text-[10px] uppercase tracking-widest shadow-xl shadow-red-500/20 transition-all w-full md:w-auto z-10"
-              >
-                Xem giải pháp
-              </motion.button>
               <div className="absolute inset-0 bg-gradient-to-r from-red-500/5 to-transparent skew-x-12 translate-x-full group-hover:translate-x-0 transition-transform duration-1000" />
            </motion.section>
         ) : salesRatio < timeElapsedRatio ? (
@@ -337,7 +293,6 @@ export default function Dashboard() {
                    Tiến độ chậm. Dự báo <span className="text-white">{projectedSalesRatio.toFixed(1)}%</span>. Cần bứt phá ngay hôm nay.
                  </p>
               </div>
-              <button onClick={handleAnalyze} className="text-yellow-500 text-[10px] font-black uppercase tracking-widest hover:underline px-4 py-2 rounded-xl hover:bg-yellow-500/10 transition-colors">Phân tích</button>
           </motion.section>
         ) : null}
 
@@ -368,18 +323,6 @@ export default function Dashboard() {
               {dailyTasks.length > 0 && (
                 <div className="bg-slate-950/80 border border-white/10 px-6 py-4 rounded-3xl flex items-center gap-6 shrink-0 backdrop-blur-md">
                    <div>
-                      <p className="text-[8px] text-slate-500 uppercase font-black tracking-widest mb-0.5">Hôm nay</p>
-                      <motion.span 
-                        key={lastInsight?.daily_target}
-                        initial={{ opacity: 0, y: 5 }}
-                        animate={{ opacity: 1, y: 0 }}
-                        className="text-xl font-black text-blue-400 font-mono tracking-tighter"
-                      >
-                        {lastInsight?.daily_target || '--'}
-                      </motion.span>
-                   </div>
-                   <div className="w-px h-8 bg-white/10" />
-                   <div>
                       <p className="text-[8px] text-slate-500 uppercase font-black tracking-widest mb-0.5">Tiến độ</p>
                       <span className="text-xl font-black text-white font-mono">{dailyTasks.filter(t => t.isCompleted).length}/{dailyTasks.length}</span>
                    </div>
@@ -402,14 +345,11 @@ export default function Dashboard() {
               </div>
            ) : (
               <motion.div 
-                whileHover={{ scale: 1.01, backgroundColor: "rgba(255,255,255,0.05)" }}
-                whileTap={{ scale: 0.99 }}
-                onClick={handleAnalyze}
-                className="py-16 text-center border-2 border-dashed border-white/5 rounded-[2.5rem] cursor-pointer transition-all group relative z-10"
+                className="py-16 text-center border-2 border-dashed border-white/5 rounded-[2.5rem] relative z-10"
               >
-                 <BrainCircuit className="w-12 h-12 text-slate-800 mx-auto mb-4 group-hover:text-blue-500 group-hover:scale-110 shadow-blue-500/20 transition-all" />
-                 <h3 className="text-white font-black uppercase text-xs tracking-widest mb-1 italic">Nạp chỉ thị từ AI</h3>
-                 <p className="text-sm font-bold text-slate-600 italic">"Hệ thống đang đợi dữ liệu phân tích..."</p>
+                 <Bookmark className="w-12 h-12 text-slate-800 mx-auto mb-4" />
+                 <h3 className="text-white font-black uppercase text-xs tracking-widest mb-1 italic">Chưa có nhiệm vụ</h3>
+                 <p className="text-sm font-bold text-slate-600 italic">"Hãy tạo nhiệm vụ mới..."</p>
               </motion.div>
            )}
         </motion.section>
@@ -510,132 +450,7 @@ export default function Dashboard() {
         {/* ACTIONS & SECONDARY SECTION */}
         <div className="grid grid-cols-1 lg:grid-cols-12 gap-8 items-start relative mb-20 px-4">
            
-           <motion.div variants={itemVariants} className="lg:col-span-8 space-y-8">
-              <section className="p-8 bg-slate-900/40 rounded-[3rem] border border-white/5 relative overflow-hidden group hover:bg-slate-900/60 transition-colors">
-                 <div className="absolute top-0 left-0 w-1 h-full bg-indigo-500/50" />
-                 <div className="flex items-center gap-3 mb-8">
-                    <div className="p-2.5 bg-indigo-500/20 rounded-xl">
-                       <Lightbulb className="w-5 h-5 text-indigo-400 group-hover:rotate-12 transition-transform" />
-                    </div>
-                    <div>
-                       <h3 className="text-sm font-black text-white uppercase tracking-widest">AI Strategist</h3>
-                       <p className="text-[9px] text-indigo-500 uppercase font-black tracking-widest">Neural Insights</p>
-                    </div>
-                 </div>
-                 
-                 <div className="relative">
-                   <AnimatePresence mode="wait">
-                     <motion.p 
-                       key={lastInsight?.main_issue}
-                       initial={{ opacity: 0, x: -10 }}
-                       animate={{ opacity: 1, x: 0 }}
-                       className="text-sm font-bold text-slate-300 leading-relaxed italic mb-8"
-                     >
-                       "{lastInsight?.main_issue || 'Hệ thống đã sẵn sàng. Hãy nạp thực tế để AI Architect tính toán các bước đi tiếp theo cho bạn.'}"
-                     </motion.p>
-                   </AnimatePresence>
-                   
-                   {/* AI PREDICTIVE COMPONENT */}
-                   {lastInsight?.prediction && (
-                     <motion.div 
-                       initial={{ opacity: 0, y: 10 }}
-                       animate={{ opacity: 1, y: 0 }}
-                       className="bg-blue-500/10 border border-blue-500/20 rounded-[2rem] p-6 mb-8 relative overflow-hidden group/forecast shadow-xl shadow-blue-500/5"
-                     >
-                       <div className="flex items-center justify-between mb-4">
-                          <div className="flex items-center gap-2">
-                             <Sparkles className="w-4 h-4 text-blue-400" />
-                             <span className="text-[10px] font-black text-blue-400 uppercase tracking-widest">Dự báo thông minh</span>
-                          </div>
-                          <div className="flex items-center gap-1.5 px-2.5 py-1 bg-blue-500/20 rounded-full">
-                             <div className={cn(
-                               "w-1.5 h-1.5 rounded-full animate-pulse",
-                               lastInsight.prediction.trend === 'up' ? "bg-emerald-500" : lastInsight.prediction.trend === 'down' ? "bg-red-500" : "bg-blue-500"
-                             )} />
-                             <span className="text-[9px] font-bold text-blue-300 uppercase leading-none">{lastInsight.prediction.trend === 'up' ? 'Xu hướng tăng' : lastInsight.prediction.trend === 'down' ? 'Xu hướng giảm' : 'Ổn định'}</span>
-                          </div>
-                       </div>
-                       
-                       <div className="grid grid-cols-2 gap-3 mb-4">
-                          <div className="p-4 bg-slate-950/40 rounded-2xl border border-white/5">
-                             <p className="text-[8px] text-slate-500 uppercase font-bold tracking-widest mb-1">Dự kiến kết thúc</p>
-                             <div className="flex items-baseline gap-1">
-                               <p className="text-2xl font-black text-white font-mono tracking-tighter">
-                                 {lastInsight.prediction.estimatedFinish.toFixed(1)}
-                               </p>
-                               <span className="text-[10px] text-slate-500 font-bold">%</span>
-                             </div>
-                          </div>
-                          <div className="p-4 bg-slate-950/40 rounded-2xl border border-white/5">
-                             <p className="text-[8px] text-slate-500 uppercase font-bold tracking-widest mb-1">Khoảng cách hụt</p>
-                             <div className="flex items-baseline gap-1">
-                               <p className="text-2xl font-black text-red-500 font-mono tracking-tighter">
-                                 {lastInsight.prediction.gapToGoal.toFixed(1)}
-                               </p>
-                               <span className="text-[10px] text-red-500/50 font-bold">%</span>
-                             </div>
-                          </div>
-                       </div>
-                       
-                       <p className="text-xs font-medium text-blue-200/80 italic leading-relaxed relative z-10">
-                         "{lastInsight.prediction.message}"
-                       </p>
-                       
-                       <div className="absolute -bottom-4 -right-4 opacity-5 group-hover/forecast:rotate-12 group-hover/forecast:scale-125 transition-all duration-700">
-                          <TrendingUp className="w-24 h-24 text-blue-400" />
-                       </div>
-                     </motion.div>
-                   )}
-                   
-                   {lastInsight?.riskAlert && (
-                     <motion.div 
-                       initial={{ x: -20, opacity: 0 }}
-                       animate={{ x: 0, opacity: 1 }}
-                       className="bg-red-500/10 border-l-4 border-red-500 p-5 rounded-r-2xl mb-6 shadow-lg shadow-red-500/5"
-                     >
-                        <p className="text-[10px] font-black text-red-500 uppercase tracking-widest mb-1 outline-none">Cảnh báo rủi ro</p>
-                        <p className="text-xs font-bold text-red-200/90">{lastInsight.riskAlert}</p>
-                     </motion.div>
-                   )}
-                 </div>
-
-                 {lastInsight?.references && lastInsight.references.length > 0 && (
-                   <div className="flex flex-wrap gap-2 pt-6 border-t border-white/5">
-                      {lastInsight.references.map((ref, idx) => (
-                        <motion.span 
-                          initial={{ opacity: 0, scale: 0.8 }}
-                          animate={{ opacity: 1, scale: 1 }}
-                          transition={{ delay: 0.5 + (idx * 0.1) }}
-                          key={ref} 
-                          className="text-[8px] text-slate-500 font-bold uppercase px-3 py-1.5 bg-white/5 rounded-lg transition-all hover:bg-white/10 hover:text-white"
-                        >
-                          {ref}
-                        </motion.span>
-                      ))}
-                   </div>
-                 )}
-              </section>
-
-              <motion.section 
-                whileHover={{ scale: 1.01, backgroundColor: "rgba(15,23,42,0.6)" }}
-                className="group p-8 bg-slate-900/40 rounded-[3rem] border border-white/5 border-dashed transition-all relative overflow-hidden"
-              >
-                  <div className="flex items-center justify-between">
-                    <div className="flex items-center gap-5">
-                       <div className="p-4 bg-purple-500/10 rounded-2xl text-purple-400 group-hover:scale-110 transition-all duration-500">
-                          <BrainCircuit className="w-7 h-7" />
-                       </div>
-                       <div>
-                          <h3 className="text-white font-black uppercase text-xs tracking-widest">Archives & Memory</h3>
-                          <p className="text-[9px] text-slate-500 font-bold uppercase tracking-widest">{memories.length} bản ghi trong hệ thống</p>
-                       </div>
-                    </div>
-                    <ChevronRight className="w-5 h-5 text-slate-700 group-hover:text-purple-400 group-hover:translate-x-2 transition-all" />
-                  </div>
-              </motion.section>
-            </motion.div>
-
-           <motion.div variants={itemVariants} className="lg:col-span-4 space-y-8">
+           <motion.div variants={itemVariants} className="lg:col-span-12 space-y-8">
               <section className="bg-slate-900/40 rounded-[2.5rem] border border-white/5 p-8 backdrop-blur-3xl shadow-2xl relative overflow-hidden">
                  <div className="flex items-center justify-between mb-8 opacity-80">
                    <span className="text-[10px] text-slate-500 font-black uppercase tracking-[0.2em]">Phân tích Gap</span>
@@ -714,29 +529,6 @@ export default function Dashboard() {
                >
                   <PlusCircle className="w-5 h-5" />
                   <span className="hidden sm:inline">Cập nhật thực tế</span>
-               </motion.button>
-
-               <motion.button 
-                 whileHover={{ scale: 1.1, rotate: 90 }}
-                 whileTap={{ scale: 0.9 }}
-                 onClick={handleAnalyze}
-                 disabled={isAnalyzing}
-                 className={cn(
-                   "w-16 h-16 rounded-full flex items-center justify-center transition-all relative overflow-hidden shadow-2xl shadow-blue-500/40",
-                   isAnalyzing ? "bg-slate-800" : "bg-white text-blue-600"
-                 )}
-               >
-                  <div className="absolute inset-0 bg-gradient-to-tr from-white/10 to-transparent" />
-                  {isAnalyzing ? (
-                    <Loader2 className="w-7 h-7 text-white animate-spin" />
-                  ) : (
-                    <motion.div 
-                      animate={{ rotate: 360 }} 
-                      transition={{ duration: 15, repeat: Infinity, ease: 'linear' }}
-                    >
-                       <Sparkles className="w-7 h-7" />
-                    </motion.div>
-                  )}
                </motion.button>
             </div>
 

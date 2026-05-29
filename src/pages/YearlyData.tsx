@@ -127,58 +127,50 @@ export default function YearlyData() {
               const coverageRatio = formatPercent(monthData.coverageActual, monthData.coverageTarget);
               
               return (
-                <div key={i} className="bg-slate-800/20 border border-white/5 rounded-2xl p-4 flex flex-col gap-3">
-                  <div className="flex items-center justify-between border-b border-white/5 pb-2">
-                    <span className="text-sm font-black text-white uppercase tracking-widest">Tháng {i + 1}</span>
+                <div key={i} className="bg-slate-800/20 border border-white/5 rounded-xl p-3 flex flex-col gap-2">
+                  <div className="flex items-center justify-between pb-1 border-b border-white/5">
+                    <span className="text-xs font-bold text-white uppercase tracking-wider">Tháng {i + 1}</span>
                   </div>
                   
-                  <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                  <div className="flex flex-col gap-2">
                     {/* Doanh số */}
-                    <div className="flex flex-col gap-1.5">
-                      <div className="flex items-center justify-between">
-                         <span className="text-[10px] text-slate-400 font-bold uppercase tracking-widest">Doanh số</span>
-                         <span className="text-[10px] text-emerald-400 font-mono font-bold bg-emerald-500/10 px-2 py-0.5 rounded-full">{salesRatio}</span>
-                      </div>
-                      <div className="flex gap-2">
+                    <div className="flex bg-slate-900/50 rounded-lg p-1.5 gap-2 items-center">
+                       <span className="text-[9px] text-slate-500 font-bold uppercase tracking-widest w-16 shrink-0">Doanh số</span>
+                       <span className="text-[9px] text-emerald-400 font-bold bg-emerald-500/10 px-1.5 py-0.5 rounded">{salesRatio}</span>
+                       <div className="flex flex-1 gap-2 border-l border-white/10 pl-2">
                          <input 
-                           type="number"
-                           placeholder="Khoán"
+                           type="number" placeholder="Khoán" title="Khoán Doanh số"
                            value={monthData.salesTarget === 0 && !monthData.salesTarget ? '' : monthData.salesTarget}
                            onChange={handleNumChange(i, 'salesTarget')}
-                           className="bg-slate-800/50 border border-white/10 rounded-xl px-3 py-2 w-full text-xs text-purple-400 font-mono focus:ring-1 focus:ring-purple-500 outline-none"
+                           className="bg-transparent w-full text-xs text-blue-400 font-mono focus:outline-none placeholder:text-slate-600 border-r border-white/5 pr-2"
                          />
                          <input 
-                           type="number"
-                           placeholder="Thực đạt"
+                           type="number" placeholder="Thực" title="Thực Doanh số"
                            value={monthData.salesActual === 0 && !monthData.salesActual ? '' : monthData.salesActual}
                            onChange={handleNumChange(i, 'salesActual')}
-                           className="bg-white/5 border border-white/10 rounded-xl px-3 py-2 w-full text-xs text-white font-mono focus:ring-1 focus:ring-purple-500 outline-none"
+                           className="bg-transparent w-full text-xs text-white font-mono focus:outline-none placeholder:text-slate-600 text-right"
                          />
-                      </div>
+                       </div>
                     </div>
 
                     {/* Bao phủ */}
-                    <div className="flex flex-col gap-1.5">
-                      <div className="flex items-center justify-between">
-                         <span className="text-[10px] text-slate-400 font-bold uppercase tracking-widest">Bao phủ</span>
-                         <span className="text-[10px] text-emerald-400 font-mono font-bold bg-emerald-500/10 px-2 py-0.5 rounded-full">{coverageRatio}</span>
-                      </div>
-                      <div className="flex gap-2">
+                    <div className="flex bg-slate-900/50 rounded-lg p-1.5 gap-2 items-center">
+                       <span className="text-[9px] text-slate-500 font-bold uppercase tracking-widest w-16 shrink-0">Bao phủ</span>
+                       <span className="text-[9px] text-emerald-400 font-bold bg-emerald-500/10 px-1.5 py-0.5 rounded">{coverageRatio}</span>
+                       <div className="flex flex-1 gap-2 border-l border-white/10 pl-2">
                          <input 
-                           type="number"
-                           placeholder="Khoán"
+                           type="number" placeholder="Khoán" title="Khoán Bao phủ"
                            value={monthData.coverageTarget === 0 && !monthData.coverageTarget ? '' : monthData.coverageTarget}
                            onChange={handleNumChange(i, 'coverageTarget')}
-                           className="bg-slate-800/50 border border-white/10 rounded-xl px-3 py-2 w-full text-xs text-purple-400 font-mono focus:ring-1 focus:ring-purple-500 outline-none"
+                           className="bg-transparent w-full text-xs text-blue-400 font-mono focus:outline-none placeholder:text-slate-600 border-r border-white/5 pr-2"
                          />
                          <input 
-                           type="number"
-                           placeholder="Thực đạt"
+                           type="number" placeholder="Thực" title="Thực Bao phủ"
                            value={monthData.coverageActual === 0 && !monthData.coverageActual ? '' : monthData.coverageActual}
                            onChange={handleNumChange(i, 'coverageActual')}
-                           className="bg-white/5 border border-white/10 rounded-xl px-3 py-2 w-full text-xs text-white font-mono focus:ring-1 focus:ring-purple-500 outline-none"
+                           className="bg-transparent w-full text-xs text-white font-mono focus:outline-none placeholder:text-slate-600 text-right"
                          />
-                      </div>
+                       </div>
                     </div>
                   </div>
                 </div>

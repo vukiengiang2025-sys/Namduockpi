@@ -1,9 +1,8 @@
 import { useState, useEffect } from 'react';
 import Dashboard from './pages/Dashboard';
 import YearlyData from './pages/YearlyData';
-import Weekly from './pages/Weekly';
 import Settings from './pages/Settings';
-import { LayoutDashboard, CalendarDays, BarChart3, Settings as SettingsIcon, BrainCircuit, ShieldCheck, Flame } from 'lucide-react';
+import { LayoutDashboard, CalendarDays, BarChart3, Settings as SettingsIcon, Book, ShieldCheck, Flame } from 'lucide-react';
 import { cn } from './lib/utils';
 import { motion, AnimatePresence } from 'motion/react';
 import { useAppStore } from './store';
@@ -11,7 +10,7 @@ import Notes from './pages/Notes';
 import ToastContainer from './components/Toast';
 
 export default function App() {
-  const [activeTab, setActiveTab] = useState<'dashboard' | 'yearly' | 'intel' | 'strategy' | 'settings'>('dashboard');
+  const [activeTab, setActiveTab] = useState<'dashboard' | 'yearly' | 'intel' | 'settings'>('dashboard');
   const [isSidebarOpen, setIsSidebarOpen] = useState(false);
   const { settings } = useAppStore();
 
@@ -122,8 +121,7 @@ export default function App() {
         <nav className="flex-1 space-y-2">
           <NavItem id="dashboard" icon={LayoutDashboard} label="Chiến lược" />
           <NavItem id="yearly" icon={CalendarDays} label="Mục tiêu Năm" />
-          <NavItem id="intel" icon={BrainCircuit} label="Ký ức AI" />
-          <NavItem id="strategy" icon={BarChart3} label="Tổng kết Tuần" />
+          <NavItem id="intel" icon={Book} label="Ghi chú" />
           <NavItem id="settings" icon={SettingsIcon} label="Hệ thống" />
         </nav>
 
@@ -173,8 +171,7 @@ export default function App() {
                 <nav className="space-y-3">
                   <NavItem id="dashboard" icon={LayoutDashboard} label="Chiến lược" />
                   <NavItem id="yearly" icon={CalendarDays} label="Mục tiêu Năm" />
-                  <NavItem id="intel" icon={BrainCircuit} label="Ký ức AI" />
-                  <NavItem id="strategy" icon={BarChart3} label="Tổng kết Tuần" />
+                  <NavItem id="intel" icon={Book} label="Ghi chú" />
                   <NavItem id="settings" icon={SettingsIcon} label="Hệ thống" />
                 </nav>
               </motion.aside>
@@ -196,7 +193,6 @@ export default function App() {
               {activeTab === 'dashboard' && <Dashboard key="dashboard" />}
               {activeTab === 'yearly' && <YearlyData key="yearly" />}
               {activeTab === 'intel' && <Notes key="intel" />}
-              {activeTab === 'strategy' && <Weekly key="strategy" />}
               {activeTab === 'settings' && <Settings key="settings" />}
             </motion.div>
           </AnimatePresence>
@@ -208,7 +204,7 @@ export default function App() {
         {[
           { id: 'dashboard', icon: LayoutDashboard, label: 'Chiến sự' },
           { id: 'yearly', icon: CalendarDays, label: 'Năm' },
-          { id: 'intel', icon: BrainCircuit, label: 'Ký ức' },
+          { id: 'intel', icon: Book, label: 'Ghi chú' },
           { id: 'settings', icon: SettingsIcon, label: 'Hệ thống' }
         ].map(item => (
           <button
