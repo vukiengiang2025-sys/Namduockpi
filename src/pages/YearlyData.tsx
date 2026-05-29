@@ -61,7 +61,7 @@ export default function YearlyData() {
       initial={{ opacity: 0, y: 10, filter: 'blur(10px)' }}
       animate={{ opacity: 1, y: 0, filter: 'blur(0px)' }}
       exit={{ opacity: 0, y: -10, filter: 'blur(10px)' }}
-      className="space-y-8 pb-10"
+      className="space-y-8 pb-32 md:pb-12"
     >
       <div className="px-5 pt-8 pb-4 sticky top-0 z-20 bg-slate-950/80 backdrop-blur-2xl border-b border-white/5 shadow-sm">
         <div className="flex items-center gap-2 mb-1">

@@ -60,38 +60,6 @@ export default function Dashboard() {
   const projectedSalesRatio = (projectedSalesEndOfMonth / (month.salesTarget || 1)) * 100;
   const requiredDailySales = isCurrentMonth ? Math.max(0, (month.salesTarget - month.salesActual) / remainingDays) : 0;
 
-  const GapAnalysis = () => {
-    const salesGap = Math.max(0, month.salesTarget - month.salesActual);
-    const coverageGap = Math.max(0, month.coverageTarget - month.coverageActual);
-    const skuGap = Math.max(0, 4.7 - month.skuActual);
-    const dailyQuota = remainingDays > 0 ? salesGap / remainingDays : 0;
-    const runRate = month.salesActual / Math.max(1, currentDay);
-    
-    const items = [
-      { label: "Thiếu doanh số", val: salesGap.toLocaleString() + "đ", sub: "Gap cần bù", color: salesGap === 0 ? "text-emerald-400" : "text-red-400", bg: "bg-red-500/5" },
-      { label: "Quota / ngày", val: Math.round(dailyQuota).toLocaleString() + "đ", sub: `${remainingDays} ngày còn lại`, color: "text-amber-400", bg: "bg-amber-500/5" },
-      { label: "Dự báo cuối tháng", val: projectedSalesRatio.toFixed(1) + "%", sub: projectedSalesRatio >= 100 ? "✓ Đạt mục tiêu" : "⚠ Hụt mục tiêu", color: projectedSalesRatio >= 100 ? "text-emerald-400" : "text-red-400", bg: projectedSalesRatio >= 100 ? "bg-emerald-500/5" : "bg-red-500/5" },
-      { label: "Coverage gap", val: coverageGap + " NT", sub: coverageGap === 0 ? "✓ Đủ bao phủ" : "Cần thêm " + coverageGap + " điểm", color: coverageGap === 0 ? "text-emerald-400" : "text-amber-400", bg: "bg-amber-500/5" },
-      { label: "SKU gap", val: skuGap.toFixed(1), sub: skuGap === 0 ? "✓ Đủ tier" : "Cần thêm " + skuGap.toFixed(1) + " SKU", color: skuGap === 0 ? "text-emerald-400" : "text-purple-400", bg: "bg-purple-500/5" },
-      { label: "Run-rate ngày", val: Math.round(runRate).toLocaleString() + "đ", sub: "Trung bình hiện tại", color: runRate >= dailyQuota ? "text-emerald-400" : "text-amber-400", bg: "bg-slate-500/5" },
-    ];
-
-    return (
-      <div className="rounded-[2.5rem] p-6 mb-8 bg-slate-900/40 border border-white/5 backdrop-blur-xl">
-        <p className="text-[10px] font-black text-slate-500 uppercase tracking-widest mb-4">Phân tích Gap — Đa chiều</p>
-        <div className="grid grid-cols-2 lg:grid-cols-3 gap-3">
-          {items.map(item => (
-            <div key={item.label} className={cn("rounded-2xl p-4 border border-white/5", item.bg)}>
-              <p className={cn("text-[8px] font-black uppercase tracking-widest mb-1.5", item.color)}>{item.label}</p>
-              <p className="text-sm font-black font-mono text-white leading-none">{item.val}</p>
-              <p className="text-[8px] text-slate-500 mt-1 font-bold uppercase tracking-tight">{item.sub}</p>
-            </div>
-          ))}
-        </div>
-      </div>
-    );
-  };
-
   const MilestoneBadge = ({ salesPct }: { salesPct: number }) => {
     const milestones = [];
     if (salesPct >= 120) milestones.push({ label: "🏆 XUẤT SẮC", color: "text-amber-400", bg: "bg-amber-500/10", border: "border-amber-500/20" });
@@ -298,14 +266,6 @@ export default function Dashboard() {
 
         {/* TIER 2: ACTION HUB */}
         <motion.section variants={itemVariants} className="relative overflow-hidden bg-slate-900/40 rounded-[3rem] border border-white/5 p-8 backdrop-blur-2xl shadow-2xl group">
-           <motion.div 
-             animate={{ rotate: 360 }}
-             transition={{ duration: 40, repeat: Infinity, ease: "linear" }}
-             className="absolute -top-20 -right-20 p-10 opacity-5 pointer-events-none"
-           >
-              <Sparkles className="w-64 h-64 text-blue-500" />
-           </motion.div>
-           
            <div className="flex flex-col md:flex-row md:items-center justify-between gap-6 mb-10 relative z-10">
               <div className="flex items-center gap-4">
                 <motion.div 
@@ -315,8 +275,8 @@ export default function Dashboard() {
                    <Zap className="w-7 h-7 text-white fill-current" />
                 </motion.div>
                 <div>
-                   <h2 className="text-2xl font-black text-white tracking-tight uppercase">Battle Plan</h2>
-                   <p className="text-[10px] text-slate-500 font-bold uppercase tracking-[0.2em]">Kế hoạch hành động hôm nay</p>
+                   <h2 className="text-2xl font-black text-white tracking-tight uppercase">Bảng Công Việc</h2>
+                   <p className="text-[10px] text-slate-500 font-bold uppercase tracking-[0.2em]">Nhiệm vụ hàng ngày</p>
                 </div>
               </div>
 
@@ -345,17 +305,17 @@ export default function Dashboard() {
               </div>
            ) : (
               <motion.div 
-                className="py-16 text-center border-2 border-dashed border-white/5 rounded-[2.5rem] relative z-10"
+                className="py-10 text-center border-2 border-dashed border-white/5 rounded-[2.5rem] relative z-10"
               >
                  <Bookmark className="w-12 h-12 text-slate-800 mx-auto mb-4" />
                  <h3 className="text-white font-black uppercase text-xs tracking-widest mb-1 italic">Chưa có nhiệm vụ</h3>
-                 <p className="text-sm font-bold text-slate-600 italic">"Hãy tạo nhiệm vụ mới..."</p>
+                 <p className="text-sm font-medium text-slate-600 italic">"Danh sách công việc đang trống..."</p>
               </motion.div>
            )}
         </motion.section>
 
-        {/* TIER 3: KPI RADAR & ANALYSIS */}
-        <section className="space-y-8">
+        {/* TOP LEVEL METRICS */}
+        <section className="space-y-6">
            <div className="px-4">
              <MilestoneBadge salesPct={salesRatio} />
              <motion.div variants={itemVariants} className="flex items-center justify-between">
@@ -417,9 +377,6 @@ export default function Dashboard() {
                 icon={Award} 
               />
            </div>
-           
-           {/* GAP ANALYSIS — NEW v2.0 */}
-           <GapAnalysis />
         </section>
 
         {/* TIER 4: DAILY STRIKE */}
@@ -451,47 +408,7 @@ export default function Dashboard() {
         <div className="grid grid-cols-1 lg:grid-cols-12 gap-8 items-start relative mb-20 px-4">
            
            <motion.div variants={itemVariants} className="lg:col-span-12 space-y-8">
-              <section className="bg-slate-900/40 rounded-[2.5rem] border border-white/5 p-8 backdrop-blur-3xl shadow-2xl relative overflow-hidden">
-                 <div className="flex items-center justify-between mb-8 opacity-80">
-                   <span className="text-[10px] text-slate-500 font-black uppercase tracking-[0.2em]">Phân tích Gap</span>
-                   <Clock className="w-3.5 h-3.5 text-slate-600" />
-                 </div>
-                 <div className="space-y-4">
-                    {[
-                      { label: 'Thiếu Doanh số', value: (Math.max(0, month.salesTarget - month.salesActual)).toLocaleString() + 'đ', desc: 'Sales Gap', status: (month.salesTarget - month.salesActual > 0 ? 'danger' : 'success') },
-                      { label: 'Quota Hằng ngày', value: Math.round(requiredDailySales).toLocaleString() + 'đ', desc: 'Daily Target', status: 'warning' },
-                      { label: 'Dự báo Kết thúc', value: projectedSalesRatio.toFixed(1) + '%', desc: projectedSalesRatio >= 100 ? 'Đạt mục tiêu' : 'Hụt mục tiêu', status: projectedSalesRatio >= 100 ? 'success' : 'danger' },
-                      { label: 'Thiếu Bao phủ', value: Math.max(0, month.coverageTarget - month.coverageActual).toString() + ' NT', desc: 'Coverage Gap', status: month.coverageTarget > month.coverageActual ? 'warning' : 'success' },
-                      { label: 'Thiếu SKU', value: Math.max(0, 4.7 - month.skuActual).toFixed(1), desc: 'SKU Gap (to 4.7)', status: month.skuActual < 4.7 ? 'warning' : 'success' },
-                    ].map((item, idx) => (
-                      <motion.div 
-                        initial={{ opacity: 0, x: 20 }}
-                        animate={{ opacity: 1, x: 0 }}
-                        transition={{ delay: 0.8 + (idx * 0.1) }}
-                        key={item.label} 
-                        className="bg-slate-950/50 p-5 rounded-[1.5rem] border border-white/5 hover:border-white/10 transition-colors"
-                      >
-                         <div className="flex items-center justify-between mb-2">
-                            <p className="text-[9px] text-slate-600 uppercase font-black tracking-widest">{item.label}</p>
-                            <motion.span 
-                              animate={{ scale: [1, 1.2, 1], opacity: [0.5, 1, 0.5] }}
-                              transition={{ duration: 2, repeat: Infinity }}
-                              className={cn(
-                                "w-1.5 h-1.5 rounded-full shadow-[0_0_10px]",
-                                item.status === 'danger' ? "bg-red-500 shadow-red-500/50" : item.status === 'warning' ? "bg-yellow-500 shadow-yellow-500/50" : "bg-emerald-500 shadow-emerald-500/50"
-                              )} 
-                            />
-                         </div>
-                         <div className="flex items-end justify-between">
-                            <span className="text-lg font-black text-white font-mono leading-none tracking-tighter">{item.value}</span>
-                            <span className="text-[7px] text-slate-700 font-bold uppercase tracking-widest">{item.desc}</span>
-                         </div>
-                      </motion.div>
-                    ))}
-                 </div>
-              </section>
-
-              <section className="bg-slate-900/40 rounded-[2.5rem] border border-white/5 p-8 group">
+              <section className="bg-slate-900/40 rounded-[2.5rem] border border-white/5 p-6 md:p-8 lg:w-1/2 lg:mx-auto group">
                  <h3 className="text-[10px] text-slate-500 font-black uppercase tracking-[0.2em] mb-6 flex items-center gap-2">
                     <Database className="w-4 h-4 group-hover:text-blue-400 transition-colors" /> Tổng hợp dữ liệu
                  </h3>
@@ -505,6 +422,69 @@ export default function Dashboard() {
                       <span className="flex items-center gap-3"><FileSpreadsheet className="w-4.5 h-4.5" /> Xuất Báo cáo Excel Năm</span>
                       <ChevronRight className="w-4 h-4 opacity-50" />
                     </motion.button>
+
+                    <div className="grid grid-cols-2 gap-3 mt-2">
+                      <motion.button 
+                         whileHover={{ scale: 1.02 }}
+                         whileTap={{ scale: 0.98 }}
+                         onClick={async () => {
+                           const state = useAppStore.getState();
+                           const backupData = JSON.stringify({
+                             months: state.months,
+                             quarters: state.quarters,
+                             halfYears: state.halfYears,
+                             notes: state.notes,
+                             memories: state.memories,
+                             dailySnapshots: state.dailySnapshots,
+                             taskLogs: state.taskLogs,
+                             strategyLogs: state.strategyLogs,
+                             userProfile: state.userProfile,
+                             settings: state.settings,
+                             version: '1.0.0',
+                             exportDate: new Date().toISOString()
+                           }, null, 2);
+                           await saveFile(`namduoc_kpi_backup_${new Date().toISOString().split('T')[0]}.json`, backupData, 'application/json');
+                         }}
+                         className="flex flex-col items-center justify-center py-4 bg-white/5 hover:bg-blue-500/10 text-blue-400 rounded-2xl border border-white/5 hover:border-blue-500/30 transition-all text-[9px] font-black uppercase tracking-widest gap-2"
+                      >
+                        <Download className="w-4 h-4" /> Sao lưu
+                      </motion.button>
+                      
+                      <motion.label 
+                         whileHover={{ scale: 1.02 }}
+                         whileTap={{ scale: 0.98 }}
+                         className="flex flex-col items-center justify-center py-4 bg-white/5 hover:bg-orange-500/10 text-orange-400 rounded-2xl border border-white/5 hover:border-orange-500/30 transition-all text-[9px] font-black uppercase tracking-widest gap-2 cursor-pointer"
+                      >
+                        <Upload className="w-4 h-4" /> Khôi phục
+                        <input 
+                          type="file" 
+                          className="hidden" 
+                          accept=".json"
+                          onClick={(e: any) => { e.target.value = null; }}
+                          onChange={(e) => {
+                            const file = e.target.files?.[0];
+                            if (!file) return;
+                            const reader = new FileReader();
+                            reader.onload = (event) => {
+                              try {
+                                const data = JSON.parse(event.target?.result as string);
+                                if (data.settings) {
+                                  const store = useAppStore.getState();
+                                  store.importData(data);
+                                  alert('Khôi phục dữ liệu thành công! Trình duyệt sẽ tự động tải lại.');
+                                  setTimeout(() => window.location.reload(), 1000);
+                                } else {
+                                  alert('File không hợp lệ!');
+                                }
+                              } catch (err) {
+                                alert('Lỗi khi đọc file backup!');
+                              }
+                            };
+                            reader.readAsText(file);
+                          }}
+                        />
+                      </motion.label>
+                    </div>
                  </div>
               </section>
            </motion.div>

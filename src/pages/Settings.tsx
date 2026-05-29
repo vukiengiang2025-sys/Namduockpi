@@ -90,7 +90,7 @@ export default function Settings() {
       variants={containerVariants}
       initial="initial"
       animate="animate"
-      className="space-y-6 pb-20"
+      className="space-y-6 pb-32 md:pb-12"
     >
       <div className="max-w-5xl mx-auto px-5 pt-8 space-y-8">
         <motion.div variants={itemVariants} className="flex items-center gap-2 mb-4">

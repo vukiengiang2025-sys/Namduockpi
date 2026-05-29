@@ -179,7 +179,7 @@ export default function App() {
           )}
         </AnimatePresence>
 
-        <main className="flex-1 relative z-10 overflow-x-hidden p-6 lg:p-8">
+        <main className="flex-1 relative z-10 overflow-x-hidden p-0 sm:p-4 md:p-6 lg:p-8">
           <AnimatePresence mode="wait">
             <motion.div
               key={activeTab}

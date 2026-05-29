@@ -116,7 +116,7 @@ export default function Notes() {
       variants={containerVariants}
       initial="initial"
       animate="animate"
-      className="space-y-6 px-5 pt-8 pb-32"
+      className="space-y-6 px-5 pt-8 pb-32 md:pb-12"
     >
       <motion.div variants={itemVariants} className="flex flex-col pt-2 mb-6">
         <p className="text-[10px] text-slate-500 uppercase tracking-widest font-bold mb-1">Hệ thống Lời nhắc</p>
