@@ -24,7 +24,7 @@ import { saveFile } from '../lib/fileSystem';
 export default function Dashboard() {
   const { 
     months, selectedMonthIndex, setSelectedMonthIndex, settings,
-    dailyTasks, setDailyTasks, toggleDailyTask, notes,
+    dailyTasks, setDailyTasks, toggleDailyTask, notes, toggleNote,
     streak, updateDailyTaskProgress, startDailyTask
   } = useAppStore();
   
@@ -36,6 +36,9 @@ export default function Dashboard() {
   const month = months[currentMonthIndex];
   const [taskFilter, setTaskFilter] = useState('all');
   
+  // Clean, non-completed notes acting as automatic reminders
+  const pendingNotes = useMemo(() => notes.filter(n => !n.isCompleted), [notes]);
+
   // KPI Calculations & States
   const daysInMonth = new Date(new Date().getFullYear(), realCurrentMonthIndex + 1, 0).getDate();
   const currentDay = new Date().getDate();
@@ -265,8 +268,8 @@ export default function Dashboard() {
         ) : null}
 
         {/* TIER 2: ACTION HUB */}
-        <motion.section variants={itemVariants} className="relative overflow-hidden bg-slate-900/40 rounded-[3rem] border border-white/5 p-8 backdrop-blur-2xl shadow-2xl group">
-           <div className="flex flex-col md:flex-row md:items-center justify-between gap-6 mb-10 relative z-10">
+        <motion.section variants={itemVariants} className="relative overflow-hidden bg-slate-900/40 rounded-[3rem] border border-white/5 p-6 md:p-8 backdrop-blur-2xl shadow-2xl group">
+           <div className="flex flex-col md:flex-row md:items-center justify-between gap-6 mb-8 relative z-10">
               <div className="flex items-center gap-4">
                 <motion.div 
                   whileHover={{ rotate: 180 }}
@@ -275,43 +278,117 @@ export default function Dashboard() {
                    <Zap className="w-7 h-7 text-white fill-current" />
                 </motion.div>
                 <div>
-                   <h2 className="text-2xl font-black text-white tracking-tight uppercase">Bảng Công Việc</h2>
-                   <p className="text-[10px] text-slate-500 font-bold uppercase tracking-[0.2em]">Nhiệm vụ hàng ngày</p>
+                   <h2 className="text-xl md:text-2xl font-black text-white tracking-tight uppercase">Bảng Công Việc & Lời Nhắc</h2>
+                   <p className="text-[10px] text-slate-500 font-bold uppercase tracking-[0.2em]">Kế hoạch hàng ngày & Ghi chú tự động</p>
                 </div>
               </div>
 
               {dailyTasks.length > 0 && (
-                <div className="bg-slate-950/80 border border-white/10 px-6 py-4 rounded-3xl flex items-center gap-6 shrink-0 backdrop-blur-md">
+                <div className="bg-slate-950/80 border border-white/10 px-6 py-3 rounded-2xl flex items-center gap-6 shrink-0 backdrop-blur-md">
                    <div>
-                      <p className="text-[8px] text-slate-500 uppercase font-black tracking-widest mb-0.5">Tiến độ</p>
-                      <span className="text-xl font-black text-white font-mono">{dailyTasks.filter(t => t.isCompleted).length}/{dailyTasks.length}</span>
+                      <p className="text-[8px] text-slate-500 uppercase font-black tracking-widest mb-0.5">Nhiệm vụ xong</p>
+                      <span className="text-lg font-black text-white font-mono">{dailyTasks.filter(t => t.isCompleted).length}/{dailyTasks.length}</span>
                    </div>
                 </div>
               )}
            </div>
 
-           {dailyTasks.length > 0 ? (
-              <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6 relative z-10">
-                 {dailyTasks
-                   .filter(t => taskFilter === 'all' || t.type === taskFilter)
-                   .map((task, idx) => (
-                    <ActionCard 
-                      key={task.id}
-                      task={task}
-                      index={idx}
-                      onToggle={toggleDailyTask}
-                    />
-                 ))}
-              </div>
-           ) : (
-              <motion.div 
-                className="py-10 text-center border-2 border-dashed border-white/5 rounded-[2.5rem] relative z-10"
-              >
-                 <Bookmark className="w-12 h-12 text-slate-800 mx-auto mb-4" />
-                 <h3 className="text-white font-black uppercase text-xs tracking-widest mb-1 italic">Chưa có nhiệm vụ</h3>
-                 <p className="text-sm font-medium text-slate-600 italic">"Danh sách công việc đang trống..."</p>
-              </motion.div>
-           )}
+           <div className="grid grid-cols-1 lg:grid-cols-12 gap-8 relative z-10 items-start">
+             {/* Left Panel: Daily KPI Tasks */}
+             <div className="lg:col-span-8 space-y-4">
+                <div className="flex items-center justify-between mb-2">
+                  <h3 className="text-xs font-black text-blue-400 uppercase tracking-widest flex items-center gap-2">
+                    <Target className="w-4 h-4" /> Nhiệm vụ chỉ tiêu
+                  </h3>
+                  <span className="text-[10px] text-slate-500 font-bold uppercase tracking-wider">{dailyTasks.length} công việc</span>
+                </div>
+
+                {dailyTasks.length > 0 ? (
+                   <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                      {dailyTasks
+                        .filter(t => taskFilter === 'all' || t.type === taskFilter)
+                        .map((task, idx) => (
+                         <ActionCard 
+                           key={task.id}
+                           task={task}
+                           index={idx}
+                           onToggle={toggleDailyTask}
+                         />
+                      ))}
+                   </div>
+                ) : (
+                   <motion.div 
+                     className="py-12 text-center border border-dashed border-white/10 rounded-[2rem]"
+                   >
+                      <Bookmark className="w-8 h-8 text-slate-700 mx-auto mb-3" />
+                      <h4 className="text-white font-black uppercase text-[10px] tracking-widest mb-1 italic">Trống nhiệm vụ</h4>
+                      <p className="text-xs font-medium text-slate-500 italic">"Chưa thiết lập mục tiêu ngày..."</p>
+                   </motion.div>
+                )}
+             </div>
+
+             {/* Right Panel: Smart Automated Alerts from user's notes */}
+             <div className="lg:col-span-4 bg-slate-950/40 border border-white/5 rounded-3xl p-5 space-y-4">
+                <div className="flex items-center justify-between pb-2 border-b border-white/5">
+                   <div className="flex items-center gap-2">
+                      <Sparkles className="w-4 h-4 text-yellow-400 fill-current animate-pulse" />
+                      <h3 className="text-xs font-black text-white uppercase tracking-widest">Gợi ý từ Ghi chú</h3>
+                   </div>
+                   {pendingNotes.length > 0 && (
+                      <span className="text-[9px] bg-yellow-500/10 text-yellow-500 px-2.5 py-0.5 rounded-full font-black font-mono animate-pulse">
+                        {pendingNotes.length} LƯU Ý
+                      </span>
+                   )}
+                </div>
+
+                {pendingNotes.length > 0 ? (
+                   <div className="space-y-3 max-h-[380px] overflow-y-auto no-scrollbar pr-1">
+                      {pendingNotes.map((note) => {
+                         const tagLabel = note.tag === 'urgent' ? 'GẤP' : note.tag === 'customer' ? 'KHÁCH' : note.tag === 'meeting' ? 'HỌP' : 'LƯU Ý';
+                         const tagColor = note.tag === 'urgent' ? 'bg-red-500/10 text-red-400 border-red-500/20' : note.tag === 'customer' ? 'bg-blue-500/10 text-blue-400 border-blue-500/20' : note.tag === 'meeting' ? 'bg-purple-500/10 text-purple-400 border-purple-500/20' : 'bg-slate-800 text-slate-400 border-white/5';
+                         
+                         return (
+                            <motion.div 
+                               key={note.id}
+                               whileHover={{ x: 2 }}
+                               className="p-3 bg-slate-950 border border-white/5 rounded-xl hover:border-white/10 transition-all flex items-start gap-3 group relative overflow-hidden"
+                            >
+                               <button 
+                                 onClick={() => {
+                                   toggleNote(note.id);
+                                 }}
+                                 className="mt-0.5 w-5 h-5 rounded-lg border border-slate-700 hover:border-blue-500 flex items-center justify-center text-transparent hover:text-blue-400 transition-colors cursor-pointer shrink-0"
+                               >
+                                  ✓
+                               </button>
+                               <div className="flex-1 min-w-0">
+                                  <p className="text-xs font-semibold text-slate-200 leading-normal break-words pr-2 group-hover:text-white transition-colors">{note.text}</p>
+                                  <div className="flex items-center gap-2 mt-2">
+                                     <span className={cn("text-[8px] font-black tracking-widest border px-1.5 py-0.5 rounded-full uppercase", tagColor)}>
+                                        {tagLabel}
+                                     </span>
+                                     {note.reminderTime && (
+                                        <span className="text-[8px] text-slate-500 font-bold font-mono">⏱ {note.reminderTime}</span>
+                                     )}
+                                  </div>
+                               </div>
+                            </motion.div>
+                         );
+                      })}
+                   </div>
+                ) : (
+                   <div className="py-8 text-center text-slate-600 space-y-2">
+                      <CheckCircle2 className="w-8 h-8 text-emerald-500/40 mx-auto" />
+                      <p className="text-[10px] font-black uppercase tracking-wider text-slate-500">Hộp Thư Sạch Sẽ</p>
+                      <p className="text-[11px] italic font-medium">Toàn bộ ghi chú quan trọng đã hoàn tất gọn gàng!</p>
+                   </div>
+                )}
+                
+                <p className="text-[9px] text-slate-500 leading-tight">
+                  💡 Ghi chú mới viết ở tab <b>Ghi chú</b> chưa hoàn thành sẽ tự động đồng bộ về đây để đốc thúc bạn làm việc mỗi ngày.
+                </p>
+             </div>
+           </div>
         </motion.section>
 
         {/* TOP LEVEL METRICS */}
@@ -382,7 +459,7 @@ export default function Dashboard() {
         {/* TIER 4: DAILY STRIKE */}
         <div className="flex items-center justify-between px-4 mb-4">
            <div className="flex flex-col">
-             <span className="text-[10px] font-black text-slate-600 uppercase tracking-[0.2em] mb-1">Chiến sự hôm nay</span>
+             <span className="text-[10px] font-black text-slate-600 uppercase tracking-[0.2em] mb-1">Mục tiêu & Tiến độ hôm nay</span>
              <div className="flex items-center gap-2">
                 <div className="h-0.5 w-8 bg-blue-500/50 rounded-full" />
                 <span className="text-[9px] font-black text-blue-500 uppercase">{dailyTasks.filter(t => t.isCompleted).length}/{dailyTasks.length} Đã xong</span>
@@ -394,8 +471,10 @@ export default function Dashboard() {
                   key={filt}
                   onClick={() => setTaskFilter(filt)}
                   className={cn(
-                    "px-3 py-1.5 rounded-xl text-[9px] font-black uppercase tracking-widest transition-all",
-                    taskFilter === filt ? "bg-blue-500 text-white" : "bg-slate-900/50 text-slate-500 border border-white/5"
+                    "px-3 py-1.5 rounded-xl text-[9px] font-black uppercase tracking-widest transition-all duration-200 cursor-pointer active:scale-95",
+                    taskFilter === filt 
+                      ? "bg-blue-500 text-white shadow-md shadow-blue-500/20" 
+                      : "bg-slate-900/50 text-slate-500 border border-white/5 hover:text-slate-300 hover:border-slate-700"
                   )}
                 >
                   {filt === 'all' ? 'Tất cả' : filt === 'sales' ? 'Doanh số' : filt === 'coverage' ? 'Bao phủ' : 'SKU'}
@@ -532,7 +611,7 @@ export default function Dashboard() {
                  <button onClick={() => setIsDataEntryOpen(false)} className="p-3 bg-white/5 rounded-2xl text-slate-500 hover:text-white"><X className="w-5 h-5" /></button>
               </div>
               <div className="flex-1 overflow-y-auto p-4 custom-scrollbar">
-                 <DataEntry />
+                 <DataEntry hideHeader={true} />
               </div>
             </motion.div>
           </>

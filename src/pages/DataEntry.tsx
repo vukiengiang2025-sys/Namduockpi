@@ -71,7 +71,11 @@ function TableRow({ label, targetValue, onTargetChange, actualValue, onActualCha
   );
 }
 
-export default function DataEntry() {
+interface DataEntryProps {
+  hideHeader?: boolean;
+}
+
+export default function DataEntry({ hideHeader = false }: DataEntryProps) {
   const { months, quarters, halfYears, updateMonth, updateQuarter, updateHalfYear, selectedMonthIndex, setSelectedMonthIndex, settings } = useAppStore();
 
   const currentMonthIndex = selectedMonthIndex;
@@ -156,24 +160,26 @@ export default function DataEntry() {
       animate="animate"
       className="space-y-8"
     >
-      <motion.div variants={itemVariants} className="px-5 pt-8 pb-4 sticky top-0 z-20 bg-slate-950/80 backdrop-blur-2xl border-b border-white/5 shadow-sm">
-        <div className="flex items-center justify-between mb-1">
-          <div className="flex items-center gap-2">
-             <span className="w-2 h-2 bg-blue-500 rounded-full"></span>
-             <span className="text-[10px] text-slate-400 uppercase tracking-widest">Bảng tính tự động</span>
+      {!hideHeader && (
+        <motion.div variants={itemVariants} className="px-5 pt-8 pb-4 sticky top-0 z-20 bg-slate-950/80 backdrop-blur-2xl border-b border-white/5 shadow-sm">
+          <div className="flex items-center justify-between mb-1">
+            <div className="flex items-center gap-2">
+               <span className="w-2 h-2 bg-blue-500 rounded-full"></span>
+               <span className="text-[10px] text-slate-400 uppercase tracking-widest">Bảng tính tự động</span>
+            </div>
+            <select 
+              value={selectedMonthIndex}
+              onChange={(e) => setSelectedMonthIndex(Number(e.target.value))}
+              className="bg-slate-800/80 border border-white/10 rounded-lg px-2 py-1 text-xs text-white font-medium focus:ring-1 focus:ring-blue-500 outline-none cursor-pointer"
+            >
+              {Array(12).fill(0).map((_, i) => (
+                <option key={i} value={i}>Dữ liệu T{i + 1}</option>
+              ))}
+            </select>
           </div>
-          <select 
-            value={selectedMonthIndex}
-            onChange={(e) => setSelectedMonthIndex(Number(e.target.value))}
-            className="bg-slate-800/80 border border-white/10 rounded-lg px-2 py-1 text-xs text-white font-medium focus:ring-1 focus:ring-blue-500 outline-none cursor-pointer"
-          >
-            {Array(12).fill(0).map((_, i) => (
-              <option key={i} value={i}>Dữ liệu T{i + 1}</option>
-            ))}
-          </select>
-        </div>
-        <h1 className="text-2xl font-black text-white tracking-tight uppercase tracking-tighter">DATA CENTER <span className="text-blue-500">ENTRY</span></h1>
-      </motion.div>
+          <h1 className="text-2xl font-black text-white tracking-tight uppercase tracking-tighter">DATA CENTER <span className="text-blue-500">ENTRY</span></h1>
+        </motion.div>
+      )}
 
       <div className="px-3 sm:px-5 space-y-8 max-w-lg mx-auto pb-20">
         <motion.div variants={itemVariants}>

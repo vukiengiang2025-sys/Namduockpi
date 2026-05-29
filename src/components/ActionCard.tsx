@@ -85,12 +85,21 @@ export const ActionCard: React.FC<ActionCardProps> = ({ task, onToggle, index })
       >
         <div className="flex items-center justify-between mb-4">
           <div className="flex items-center gap-3">
-             <div className={cn(
-               "p-2.5 rounded-2xl",
-               typeBg, typeColor
-             )}>
-                <Zap className={cn("w-4 h-4 fill-current", !task.isCompleted && task.priority === 'high' && "animate-pulse")} />
-             </div>
+             <button 
+               onClick={(e) => {
+                 e.stopPropagation();
+                 onToggle(task.id);
+               }}
+               className={cn(
+                 "p-2.5 rounded-2xl border transition-all duration-200 active:scale-90 cursor-pointer",
+                 task.isCompleted 
+                   ? "bg-emerald-500/20 text-emerald-400 border-emerald-500/30" 
+                   : "bg-slate-800 text-slate-400 border-transparent hover:border-slate-600"
+               )}
+               title={task.isCompleted ? "Đánh dấu chứa xong" : "Đánh dấu đã xong"}
+             >
+                <CheckCircle2 className={cn("w-4 h-4 fill-current", task.isCompleted ? "opacity-100" : "opacity-30")} />
+             </button>
              <div>
                 <p className="text-[10px] font-black text-slate-500 uppercase tracking-widest leading-none mb-1">
                    {task.type || 'HÀNH ĐỘNG'}
@@ -106,7 +115,7 @@ export const ActionCard: React.FC<ActionCardProps> = ({ task, onToggle, index })
             {!task.isCompleted && task.isStarted && (
               <button 
                 onClick={(e) => { e.stopPropagation(); setIsTimerRunning(!isTimerRunning); }}
-                className={cn("p-2 rounded-xl transition-all", isTimerRunning ? "bg-blue-500/20 text-blue-400" : "bg-slate-800 text-slate-400")}
+                className={cn("p-2 rounded-xl transition-all active:scale-90 cursor-pointer", isTimerRunning ? "bg-blue-500/20 text-blue-400" : "bg-slate-800 text-slate-400")}
               >
                 {isTimerRunning ? <Pause className="w-4 h-4" /> : <Play className="w-4 h-4" />}
               </button>
@@ -162,28 +171,28 @@ export const ActionCard: React.FC<ActionCardProps> = ({ task, onToggle, index })
                  onToggle(task.id);
                } else if (!task.isStarted) {
                  startDailyTask(task.id);
+               } else {
+                 onToggle(task.id); // If started, single tap toggle complete
                }
              }}
              className={cn(
-               "flex-1 h-12 rounded-2xl font-black text-[10px] uppercase tracking-widest transition-all flex items-center justify-center gap-3 overflow-hidden",
+               "flex-1 h-12 rounded-2xl font-black text-[10px] uppercase tracking-widest transition-all duration-200 flex items-center justify-center gap-3 overflow-hidden cursor-pointer hover:brightness-110 active:scale-[0.96]",
                task.isCompleted 
-                 ? "bg-slate-800 text-slate-500" 
+                 ? "bg-slate-800 text-slate-500 border border-slate-700/50" 
                  : task.isStarted 
-                   ? "bg-emerald-600 text-white shadow-xl shadow-emerald-900/40" 
-                   : "bg-blue-600 text-white shadow-xl shadow-blue-900/40 active:scale-95"
+                   ? "bg-emerald-600 text-white shadow-lg shadow-emerald-900/30 border border-emerald-500/30" 
+                   : "bg-blue-600 text-white shadow-lg shadow-blue-900/30 border border-blue-500/30 font-black"
              )}
            >
               {task.isCompleted ? (
                 <>
-                  <CheckCircle2 className="w-4 h-4" />
-                  <span>Hoàn tất</span>
+                  <CheckCircle2 className="w-4 h-4 text-emerald-400" />
+                  <span>Cần làm lại?</span>
                 </>
               ) : task.isStarted ? (
                 <>
-                  <motion.div animate={{ rotate: 360 }} transition={{ duration: 3, repeat: Infinity, ease: "linear" }}>
-                    <Zap className="w-4 h-4 fill-current" />
-                  </motion.div>
-                  <span>Đang thực chiến</span>
+                  <CheckCircle2 className="w-4 h-4 text-white animate-bounce" />
+                  <span>Xong nhiệm vụ</span>
                 </>
               ) : (
                 <>
@@ -193,8 +202,8 @@ export const ActionCard: React.FC<ActionCardProps> = ({ task, onToggle, index })
               )}
            </button>
            
-           {!task.isCompleted && (
-             <div className="flex flex-col items-center gap-1 opacity-40 shrink-0">
+           {!task.isCompleted && !task.isStarted && (
+             <div className="flex flex-col items-center gap-1 opacity-40 shrink-0 select-none">
                <motion.div 
                  animate={{ x: [0, 8, 0] }}
                  transition={{ duration: 1.5, repeat: Infinity }}

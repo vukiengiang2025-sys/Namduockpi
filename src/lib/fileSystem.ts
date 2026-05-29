@@ -10,7 +10,7 @@ export async function saveFile(filename: string, data: string, mimeType: string)
         directory: Directory.Documents,
         encoding: Encoding.UTF8,
       });
-      alert(`Đã lưu file vào thư mục Documents: ${result.uri}`);
+      console.log(`Đã lưu file vào thư mục Documents: ${result.uri}`);
       return result;
     } catch (e) {
       console.error('Error writing file to native filesystem', e);

@@ -137,10 +137,14 @@ export default function Notes() {
               {['urgent', 'customer', 'meeting', 'other'].map(tid => (
                 <button 
                   key={tid}
-                  onClick={() => setSelectedTag(tid as any)}
-                  className={`text-[10px] px-2 py-1 rounded-full font-medium transition-colors ${
-                    selectedTag === tid ? getTagColor(tid) : 'bg-slate-800 text-slate-400 hover:bg-slate-700'
-                  }`}
+                  type="button"
+                  onClick={() => setSelectedTag(selectedTag === tid ? '' : tid as any)}
+                  className={cn(
+                    "text-[10px] px-3 py-1.5 rounded-full font-semibold transition-all duration-200 cursor-pointer active:scale-95",
+                    selectedTag === tid 
+                      ? getTagColor(tid) + " shadow-md" 
+                      : 'bg-slate-950/20 text-slate-400 hover:text-slate-200 border border-white/5 hover:border-white/15'
+                  )}
                 >
                   {getTagLabel(tid)}
                 </button>
@@ -170,19 +174,38 @@ export default function Notes() {
 
         <div className="space-y-3">
           {notes.map((note) => (
-            <div key={note.id} className={cn("bg-slate-900/40 rounded-2xl p-4 border border-white/5 flex gap-3", note.isCompleted && "opacity-50")}>
-              <button onClick={() => toggleNote(note.id)} className="mt-1">
-                {note.isCompleted ? <CheckCircle className="w-5 h-5 text-yellow-500" /> : <Circle className="w-5 h-5 text-slate-500" />}
+            <motion.div 
+              key={note.id} 
+              layout
+              initial={{ opacity: 0, y: 10 }}
+              animate={{ opacity: 1, y: 0 }}
+              exit={{ opacity: 0, scale: 0.95 }}
+              whileHover={{ y: -1 }}
+              className={cn(
+                "bg-slate-900/40 rounded-2xl p-4 border border-white/5 flex gap-4 items-start transition-all duration-300 shadow-md hover:shadow-lg hover:border-white/10", 
+                note.isCompleted ? "opacity-45 bg-slate-950/20" : ""
+              )}
+            >
+              <button 
+                onClick={() => toggleNote(note.id)} 
+                className="mt-0.5 cursor-pointer active:scale-90 transition-transform text-slate-500 hover:text-slate-300"
+              >
+                {note.isCompleted ? <CheckCircle className="w-5 h-5 text-yellow-500" /> : <Circle className="w-5 h-5" />}
               </button>
-              <div className="flex-1">
-                <div className="flex items-center gap-2 mb-1">
-                  {note.tag && <span className={cn("text-[8px] px-1.5 py-0.5 rounded font-black uppercase", getTagColor(note.tag))}>{getTagLabel(note.tag)}</span>}
-                  <p className={cn("text-sm", note.isCompleted ? "line-through text-slate-600" : "text-white")}>{note.text}</p>
+              <div className="flex-1 min-w-0">
+                <div className="flex items-start gap-2 flex-wrap mb-1">
+                  {note.tag && <span className={cn("text-[8px] px-2 py-0.5 rounded-full font-black uppercase tracking-wider", getTagColor(note.tag))}>{getTagLabel(note.tag)}</span>}
+                  <p className={cn("text-xs font-semibold leading-relaxed break-words", note.isCompleted ? "line-through text-slate-600" : "text-white")}>{note.text}</p>
                 </div>
-                {note.reminderTime && <p className="text-[10px] text-slate-500">Chuông báo: {note.reminderTime}</p>}
+                {note.reminderTime && <p className="text-[10px] text-slate-500 font-mono flex items-center gap-1.5 mt-1.5">⏱ Chuông báo: {note.reminderTime}</p>}
               </div>
-              <button onClick={() => deleteNote(note.id)} className="text-slate-600 hover:text-red-400"><Trash2 className="w-4 h-4" /></button>
-            </div>
+              <button 
+                onClick={() => deleteNote(note.id)} 
+                className="text-slate-500 hover:text-red-400 active:scale-90 transition-all p-1 hover:bg-red-500/10 rounded-lg cursor-pointer"
+              >
+                <Trash2 className="w-4 h-4" />
+              </button>
+            </motion.div>
           ))}
         </div>
       </motion.div>

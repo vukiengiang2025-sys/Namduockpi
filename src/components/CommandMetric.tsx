@@ -1,5 +1,5 @@
 import React from 'react';
-import { LucideIcon, Zap, Activity, CheckCircle2 } from 'lucide-react';
+import { LucideIcon, Zap, Activity, CheckCircle2, Edit2 } from 'lucide-react';
 import { cn } from '../lib/utils';
 import { ProgressCircle } from './ProgressCircle';
 
@@ -27,8 +27,10 @@ export function CommandMetric({
     <div 
       onClick={onClick}
       className={cn(
-        "relative p-5 rounded-[2.5rem] bg-slate-900/40 border border-white/5 backdrop-blur-xl group transition-all h-full flex flex-col justify-between overflow-hidden",
-        onClick ? "cursor-pointer active:bg-slate-950 active:scale-[0.98] shadow-lg shadow-black/40" : ""
+        "relative p-5 rounded-[2.5rem] bg-slate-900/40 border transition-all duration-300 h-full flex flex-col justify-between overflow-hidden",
+        onClick 
+          ? "cursor-pointer border-blue-500/15 hover:border-blue-500/40 hover:bg-slate-900/60 active:scale-[0.97] active:brightness-95 shadow-lg hover:shadow-blue-500/5 hover:translate-y-[-2px] group" 
+          : "border-white/5"
       )}
     >
       {/* Subtle Background Glow */}
@@ -39,12 +41,19 @@ export function CommandMetric({
 
       <div className="flex items-center justify-between mb-6 relative z-10">
         <div className={cn(
-          "p-2.5 rounded-2xl",
+          "p-2.5 rounded-2xl flex items-center justify-center",
           status === 'danger' ? "bg-red-500/10 text-red-400" : status === 'warning' ? "bg-yellow-500/10 text-yellow-400" : "bg-emerald-500/10 text-emerald-400"
         )}>
           <HeatIcon className={cn("w-5 h-5", status === 'danger' && "animate-pulse")} />
         </div>
-        <ProgressCircle percent={percent} size={44} strokeWidth={4} color={statusColor as any} status={status} />
+        <div className="flex items-center gap-2">
+          {onClick && (
+            <span className="text-[8px] bg-blue-500/20 text-blue-400 px-2 py-0.5 rounded-full font-bold uppercase tracking-wider opacity-60 group-hover:opacity-100 transition-opacity flex items-center gap-1">
+              <Edit2 className="w-2 h-2" /> Nhập số
+            </span>
+          )}
+          <ProgressCircle percent={percent} size={44} strokeWidth={4} color={statusColor as any} status={status} />
+        </div>
       </div>
       
       <div className="relative z-10">

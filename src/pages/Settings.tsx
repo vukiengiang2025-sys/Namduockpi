@@ -1,6 +1,6 @@
 import { motion } from 'motion/react';
 import { useAppStore } from '../store';
-import { Settings as SettingsIcon, Key, Palette, Save, Type, Hexagon, Box, Target, Activity, LayoutDashboard, BarChart3, PieChart, Shapes, Sun, Moon, Type as TypeIcon, Image as ImageIcon, Sliders, Database, Download, Upload, BrainCircuit, ShieldCheck, Cpu, Sparkles, TrendingUp } from 'lucide-react';
+import { Settings as SettingsIcon, Key, Palette, Save, Type, Hexagon, Box, Target, Activity, LayoutDashboard, BarChart3, PieChart, Shapes, Sun, Moon, Type as TypeIcon, Image as ImageIcon, Sliders, Database, Download, Upload, BrainCircuit, ShieldCheck, Cpu, Sparkles, TrendingUp, Leaf, Heart, Medal, Star, FlaskConical, Award, Pill, Dna } from 'lucide-react';
 import { useState, useEffect } from 'react';
 
 import { saveFile } from '../lib/fileSystem';
@@ -13,18 +13,26 @@ const THEMES = [
 ];
 
 export const APP_ICONS = [
-  { id: 'brain', icon: BrainCircuit },
-  { id: 'shield', icon: ShieldCheck },
-  { id: 'cpu', icon: Cpu },
-  { id: 'sparkles', icon: Sparkles },
-  { id: 'trending', icon: TrendingUp },
-  { id: 'hexagon', icon: Hexagon },
-  { id: 'target', icon: Target },
-  { id: 'activity', icon: Activity },
+  { id: 'brain', icon: BrainCircuit, label: 'Trí tuệ' },
+  { id: 'shield', icon: ShieldCheck, label: 'Bảo mật' },
+  { id: 'cpu', icon: Cpu, label: 'Thiết bị' },
+  { id: 'sparkles', icon: Sparkles, label: 'Lấp lánh' },
+  { id: 'trending', icon: TrendingUp, label: 'Tương lai' },
+  { id: 'hexagon', icon: Hexagon, label: 'Lục giác' },
+  { id: 'target', icon: Target, label: 'Chỉ tiêu' },
+  { id: 'activity', icon: Activity, label: 'Bền bỉ' },
+  { id: 'leaf', icon: Leaf, label: 'Dược thảo' },
+  { id: 'heart', icon: Heart, label: 'Sức khoẻ' },
+  { id: 'medal', icon: Medal, label: 'Danh hiệu' },
+  { id: 'star', icon: Star, label: 'Ngôi sao' },
+  { id: 'pill', icon: Pill, label: 'Viên thuốc' },
+  { id: 'flask', icon: FlaskConical, label: 'Nghiên cứu' },
+  { id: 'dna', icon: Dna, label: 'Sinh học' },
+  { id: 'award', icon: Award, label: 'Giải thưởng' }
 ];
 
 export default function Settings() {
-  const { settings, updateSettings } = useAppStore();
+  const { settings, updateSettings, addToast } = useAppStore();
   const [localSettings, setLocalSettings] = useState({
     themeMode: 'dark',
     fontFamily: 'sans',
@@ -66,7 +74,7 @@ export default function Settings() {
 
   const handleSave = () => {
     updateSettings(localSettings);
-    alert('Đã lưu cài đặt!');
+    addToast({ message: 'Đã lưu cấu hình cài đặt hệ thống thành công!', type: 'success' });
   };
 
   const containerVariants = {
@@ -320,20 +328,25 @@ export default function Settings() {
       <motion.div variants={itemVariants} className="bg-slate-900/40 rounded-3xl p-5 shadow-2xl border border-white/5 backdrop-blur-xl space-y-4">
         <div className="flex items-center gap-2 mb-2">
           <Shapes className="w-5 h-5 text-slate-400" />
-          <h2 className="text-sm font-medium text-white">Biểu tượng Ứng dụng</h2>
+          <h2 className="text-sm font-medium text-white">Biểu tượng Đại diện Ứng dụng</h2>
         </div>
-        <div className="grid grid-cols-4 gap-3">
+        <p className="text-[10px] text-slate-500">Lựa chọn biểu tượng hiển thị thương hiệu của bạn ở Sidebar điều hướng và tiêu đề chính.</p>
+        <div className="grid grid-cols-4 sm:grid-cols-6 md:grid-cols-8 gap-2">
           {APP_ICONS.map((item) => (
             <button
               key={item.id}
-              onClick={() => setLocalSettings({...localSettings, appIcon: item.id})}
-              className={`flex flex-col items-center justify-center p-4 rounded-xl border transition-all gap-2 ${
+              onClick={() => {
+                setLocalSettings({...localSettings, appIcon: item.id});
+              }}
+              className={`flex flex-col items-center justify-center p-3 rounded-2xl border transition-all gap-1.5 cursor-pointer active:scale-95 ${
                 localSettings.appIcon === item.id 
-                  ? 'border-white/20 bg-white/10 text-white' 
-                  : 'border-transparent hover:bg-white/5 text-slate-400'
+                  ? 'border-blue-500 bg-blue-500/10 text-blue-400 font-bold' 
+                  : 'border-white/5 bg-slate-950/20 hover:border-white/10 hover:bg-slate-950/40 text-slate-400 hover:text-white'
               }`}
+              title={item.label}
             >
-              <item.icon className="w-6 h-6" />
+              <item.icon className="w-5 h-5" />
+              <span className="text-[8px] font-black tracking-tighter uppercase whitespace-nowrap truncate max-w-full leading-none">{item.label}</span>
             </button>
           ))}
         </div>

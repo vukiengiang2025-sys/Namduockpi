@@ -1,7 +1,7 @@
 import { useState, useEffect } from 'react';
 import Dashboard from './pages/Dashboard';
 import YearlyData from './pages/YearlyData';
-import Settings from './pages/Settings';
+import Settings, { APP_ICONS } from './pages/Settings';
 import { LayoutDashboard, CalendarDays, BarChart3, Settings as SettingsIcon, Book, ShieldCheck, Flame } from 'lucide-react';
 import { cn } from './lib/utils';
 import { motion, AnimatePresence } from 'motion/react';
@@ -31,9 +31,9 @@ export default function App() {
   const getThemeColors = () => {
     switch (settings.themeColor) {
       case 'emerald': return { bg: 'bg-emerald-600/20', text: 'text-emerald-400', activeBg: 'bg-emerald-500', border: 'border-emerald-500/30' };
-      case 'purple': return { bg: 'bg-purple-600/20', text: 'text-purple-400', activeBg: 'bg-purple-500', border: 'border-purple-500/30' };
-      case 'rose': return { bg: 'bg-rose-600/20', text: 'text-rose-400', activeBg: 'bg-rose-500', border: 'border-rose-500/30' };
-      case 'blue': default: return { bg: 'bg-blue-600/20', text: 'text-blue-400', activeBg: 'bg-blue-500', border: 'border-blue-500/30' };
+      case 'purple': return { bg: 'bg-purple-600/20', text: 'text-purple-400', activeBg: 'bg-purple-500', border: 'border-purple-500/35' };
+      case 'rose': return { bg: 'bg-rose-600/20', text: 'text-rose-400', activeBg: 'bg-rose-500', border: 'border-rose-500/35' };
+      case 'blue': default: return { bg: 'bg-blue-600/20', text: 'text-blue-400', activeBg: 'bg-blue-500', border: 'border-blue-500/35' };
     }
   };
 
@@ -46,6 +46,8 @@ export default function App() {
     exit: { opacity: 0, x: -10 }
   };
 
+  const AppIconNode = APP_ICONS.find(i => i.id === settings.appIcon)?.icon || BarChart3;
+
   const NavItem = ({ id, icon: Icon, label }: { id: typeof activeTab, icon: any, label: string }) => (
     <button
       onClick={() => {
@@ -53,13 +55,13 @@ export default function App() {
         setIsSidebarOpen(false);
       }}
       className={cn(
-        "flex items-center gap-3 px-4 py-3 rounded-2xl transition-all duration-300 w-full group relative overflow-hidden",
+        "flex items-center gap-3 px-4 py-3 rounded-2xl transition-all duration-300 w-full group relative overflow-hidden cursor-pointer active:scale-95",
         activeTab === id 
           ? `${theme.activeBg} text-white shadow-lg shadow-black/40` 
           : "text-slate-400 hover:text-white hover:bg-white/5"
       )}
     >
-      <Icon className={cn("w-5 h-5 transition-transform duration-300 group-active:scale-90", activeTab === id ? "text-white" : theme.text)} />
+      <Icon className={cn("w-5 h-5 transition-transform duration-300 group-hover:scale-110", activeTab === id ? "text-white" : theme.text)} />
       <span className="text-xs font-bold uppercase tracking-widest">{label}</span>
       {activeTab === id && (
         <motion.div 
@@ -95,13 +97,13 @@ export default function App() {
 
       {/* Sidebar Desktop */}
       <aside className="hidden lg:flex flex-col w-64 bg-slate-900/40 backdrop-blur-3xl border-r border-white/5 p-6 sticky top-0 h-screen z-50">
-        <div className="flex items-center justify-between mb-8 px-2">
-          <div className={cn("w-10 h-10 rounded-2xl flex items-center justify-center shadow-2xl relative group", theme.bg)}>
-             <BarChart3 className={cn("w-6 h-6 z-10", theme.text)} />
+        <div className="flex items-center gap-3 mb-8 px-2">
+          <div className={cn("w-10 h-10 rounded-2xl flex items-center justify-center shadow-lg relative group transition-all duration-300 hover:scale-105 border border-white/10", theme.bg)}>
+             <AppIconNode className={cn("w-5 h-5 z-10 transition-transform duration-500 group-hover:rotate-12", theme.text)} />
           </div>
-          <div>
-            <h1 className="text-sm font-black text-white uppercase tracking-tighter leading-none">{settings.appTitle || 'KPI AI'}</h1>
-            <p className="text-[10px] text-slate-500 font-bold uppercase tracking-widest mt-1">Personal Edition</p>
+          <div className="overflow-hidden">
+            <h1 className="text-xs font-black text-white uppercase tracking-wider leading-tight truncate">{settings.appTitle || 'NAMDUOC KPI'}</h1>
+            <p className="text-[8px] text-slate-500 font-bold uppercase tracking-widest mt-0.5">Hệ thống quản lý</p>
           </div>
         </div>
 
@@ -119,7 +121,7 @@ export default function App() {
         )}
 
         <nav className="flex-1 space-y-2">
-          <NavItem id="dashboard" icon={LayoutDashboard} label="Chiến lược" />
+          <NavItem id="dashboard" icon={LayoutDashboard} label="Tổng quan" />
           <NavItem id="yearly" icon={CalendarDays} label="Mục tiêu Năm" />
           <NavItem id="intel" icon={Book} label="Ghi chú" />
           <NavItem id="settings" icon={SettingsIcon} label="Hệ thống" />
@@ -142,12 +144,12 @@ export default function App() {
 
       <div className="flex-1 flex flex-col relative min-w-0">
         <header className="lg:hidden h-16 bg-slate-900/40 backdrop-blur-2xl border-b border-white/5 px-4 flex items-center justify-between sticky top-0 z-40">
-           <button onClick={() => setIsSidebarOpen(true)} className="p-2 -ml-2 text-slate-400 hover:text-white transition-transform active:scale-90">
+           <button onClick={() => setIsSidebarOpen(true)} className="p-2 -ml-2 text-slate-400 hover:text-white transition-transform active:scale-90 cursor-pointer">
              <LayoutDashboard className="w-6 h-6" />
            </button>
-           <h1 className="text-xs font-black text-white uppercase tracking-widest">{settings.appTitle || 'KPI AI'}</h1>
-           <div className={cn("w-8 h-8 rounded-lg flex items-center justify-center", theme.bg)}>
-             <BarChart3 className={cn("w-5 h-5", theme.text)} />
+           <h1 className="text-xs font-black text-white uppercase tracking-widest truncate max-w-[180px]">{settings.appTitle || 'NAMDUOC KPI'}</h1>
+           <div className={cn("w-8 h-8 rounded-lg flex items-center justify-center border border-white/10", theme.bg)}>
+             <AppIconNode className={cn("w-4.5 h-4.5", theme.text)} />
            </div>
         </header>
 
@@ -166,10 +168,10 @@ export default function App() {
               >
                 <div className="flex items-center justify-between mb-12">
                   <span className="text-xs font-black text-white uppercase tracking-widest bg-white/5 px-3 py-1 rounded-full">Danh mục</span>
-                  <button onClick={() => setIsSidebarOpen(false)} className="w-8 h-8 flex items-center justify-center rounded-full hover:bg-white/10 text-slate-500 transition-colors">✕</button>
+                  <button onClick={() => setIsSidebarOpen(false)} className="w-8 h-8 flex items-center justify-center rounded-full hover:bg-white/10 text-slate-500 transition-colors cursor-pointer">✕</button>
                 </div>
                 <nav className="space-y-3">
-                  <NavItem id="dashboard" icon={LayoutDashboard} label="Chiến lược" />
+                  <NavItem id="dashboard" icon={LayoutDashboard} label="Tổng quan" />
                   <NavItem id="yearly" icon={CalendarDays} label="Mục tiêu Năm" />
                   <NavItem id="intel" icon={Book} label="Ghi chú" />
                   <NavItem id="settings" icon={SettingsIcon} label="Hệ thống" />
@@ -202,8 +204,8 @@ export default function App() {
       {/* Mobile Bottom Navigation — NEW v2.0 */}
       <nav className="lg:hidden fixed bottom-0 left-0 right-0 bg-slate-900/80 backdrop-blur-2xl border-t border-white/5 px-6 py-3 flex items-center justify-between z-[100] pb-safe">
         {[
-          { id: 'dashboard', icon: LayoutDashboard, label: 'Chiến sự' },
-          { id: 'yearly', icon: CalendarDays, label: 'Năm' },
+          { id: 'dashboard', icon: LayoutDashboard, label: 'Tổng quan' },
+          { id: 'yearly', icon: CalendarDays, label: 'Mục tiêu Năm' },
           { id: 'intel', icon: Book, label: 'Ghi chú' },
           { id: 'settings', icon: SettingsIcon, label: 'Hệ thống' }
         ].map(item => (
@@ -211,7 +213,7 @@ export default function App() {
             key={item.id}
             onClick={() => setActiveTab(item.id as any)}
             className={cn(
-              "flex flex-col items-center gap-1 transition-all relative",
+              "flex flex-col items-center gap-1 transition-all relative cursor-pointer active:scale-90",
               activeTab === item.id ? theme.text : "text-slate-500"
             )}
           >

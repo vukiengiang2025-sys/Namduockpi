@@ -8,32 +8,102 @@
 }
 
 body.light-mode {
-  @apply bg-slate-50 text-slate-800;
+  background-color: #f8fafc !important;
+  color: #334155 !important;
+  background-image: radial-gradient(circle at 50% 50%, #f1f5f9 0%, #f8fafc 100%) !important;
 }
-body.light-mode .bg-slate-950,
-body.light-mode .bg-slate-900\/60,
-body.light-mode .bg-slate-950\/80 {
-  @apply bg-white/90!;
+
+body.light-mode h1,
+body.light-mode h2,
+body.light-mode h3,
+body.light-mode h4,
+body.light-mode h5,
+body.light-mode h6 {
+  color: #0f172a !important;
 }
-body.light-mode .bg-slate-900\/40 {
-  @apply bg-white! shadow-xl! shadow-slate-200/50! border-slate-200/50!;
+
+body.light-mode .text-white:not(button):not(.bg-blue-500):not(.bg-blue-600):not(.bg-emerald-500):not(.bg-emerald-600):not(.bg-orange-500):not(.bg-red-500):not(.bg-red-600) {
+  color: #0f172a !important;
 }
-body.light-mode .text-white {
-  @apply text-slate-900!;
-}
-body.light-mode .border-white\/5,
-body.light-mode .border-white\/10 {
-  @apply border-slate-200!;
-}
-body.light-mode .text-slate-400 {
-  @apply text-slate-500!;
-}
+
+body.light-mode .text-slate-100,
+body.light-mode .text-slate-200,
 body.light-mode .text-slate-300 {
-  @apply text-slate-600!;
+  color: #1e293b !important;
 }
+
+body.light-mode .text-slate-400,
+body.light-mode .text-slate-500 {
+  color: #475569 !important;
+}
+
+body.light-mode .text-slate-600,
+body.light-mode .text-slate-700 {
+  color: #64748b !important;
+}
+
+/* Backgrounds mapping for light mode */
+body.light-mode .bg-slate-950,
+body.light-mode .bg-slate-950\/80,
+body.light-mode .bg-slate-950\/60,
+body.light-mode .bg-slate-900\/60,
+body.light-mode .bg-slate-950\/90,
+body.light-mode .bg-slate-900\/80 {
+  background-color: rgba(255, 255, 255, 0.95) !important;
+}
+
+body.light-mode .bg-slate-900\/40,
+body.light-mode .bg-slate-900 {
+  background-color: #ffffff !important;
+  box-shadow: 0 10px 25px -5px rgba(0, 0, 0, 0.05), 0 8px 10px -6px rgba(0, 0, 0, 0.05) !important;
+  border-color: #cbd5e1 !important;
+}
+
 body.light-mode .bg-slate-950\/50,
-body.light-mode .bg-slate-800\/80 {
-  @apply bg-slate-50! text-slate-800!;
+body.light-mode .bg-slate-900\/50,
+body.light-mode .bg-white\/5 {
+  background-color: #f1f5f9 !important;
+}
+
+body.light-mode .bg-white\/10 {
+  background-color: #e2e8f0 !important;
+}
+
+/* Borders mapping for light mode */
+body.light-mode .border-white\/5,
+body.light-mode .border-white\/10,
+body.light-mode .border-white\/20,
+body.light-mode .border-slate-800 {
+  border-color: #cbd5e1 !important;
+}
+
+body.light-mode .border-b,
+body.light-mode .border-t,
+body.light-mode .border-r,
+body.light-mode .border {
+  border-color: #cbd5e1 !important;
+}
+
+body.light-mode input:not(.bg-transparent),
+body.light-mode select,
+body.light-mode textarea {
+  background-color: #ffffff !important;
+  color: #0f172a !important;
+  border-color: #cbd5e1 !important;
+}
+
+body.light-mode input.bg-transparent {
+  background-color: transparent !important;
+  color: #0f172a !important;
+}
+
+body.light-mode select option {
+  background-color: #ffffff !important;
+  color: #0f172a !important;
+}
+
+body.light-mode select {
+  background-image: url("data:image/svg+xml;utf8,<svg fill='none' stroke='slate' stroke-width='2' viewBox='0 0 24 24' xmlns='http://www.w3.org/2000/svg'><path d='M19 9l-7 7-7-7' stroke-linecap='round' stroke-linejoin='round'></path></svg>") !important;
 }
 
 body {
