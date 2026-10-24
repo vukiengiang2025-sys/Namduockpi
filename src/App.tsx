@@ -2,15 +2,16 @@ import { useState, useEffect } from 'react';
 import Dashboard from './pages/Dashboard';
 import YearlyData from './pages/YearlyData';
 import Settings, { APP_ICONS } from './pages/Settings';
-import { LayoutDashboard, CalendarDays, BarChart3, Settings as SettingsIcon, Book, ShieldCheck, Flame } from 'lucide-react';
+import { LayoutDashboard, CalendarDays, BarChart3, Settings as SettingsIcon, Book, ShieldCheck, Flame, Compass } from 'lucide-react';
 import { cn } from './lib/utils';
 import { motion, AnimatePresence } from 'motion/react';
 import { useAppStore } from './store';
 import Notes from './pages/Notes';
 import ToastContainer from './components/Toast';
+import TDVHub from './pages/TDVHub';
 
 export default function App() {
-  const [activeTab, setActiveTab] = useState<'dashboard' | 'yearly' | 'intel' | 'settings'>('dashboard');
+  const [activeTab, setActiveTab] = useState<'dashboard' | 'tdv' | 'yearly' | 'intel' | 'settings'>('dashboard');
   const [isSidebarOpen, setIsSidebarOpen] = useState(false);
   const { settings } = useAppStore();
 
@@ -25,7 +26,7 @@ export default function App() {
                                      settings.fontFamily === 'mono' ? 'var(--font-mono)' : 
                                      'var(--font-sans)';
 
-    document.title = settings.appTitle || 'KPI Manager';
+    document.title = settings.appTitle || 'Nam Dược TDV';
   }, [settings.themeMode, settings.fontFamily, settings.appTitle]);
 
   const getThemeColors = () => {
@@ -102,7 +103,7 @@ export default function App() {
              <AppIconNode className={cn("w-5 h-5 z-10 transition-transform duration-500 group-hover:rotate-12", theme.text)} />
           </div>
           <div className="overflow-hidden">
-            <h1 className="text-xs font-black text-white uppercase tracking-wider leading-tight truncate">{settings.appTitle || 'NAMDUOC KPI'}</h1>
+            <h1 className="text-xs font-black text-white uppercase tracking-wider leading-tight truncate">{settings.appTitle || 'NAMDUOC TDV'}</h1>
             <p className="text-[8px] text-slate-500 font-bold uppercase tracking-widest mt-0.5">Hệ thống quản lý</p>
           </div>
         </div>
@@ -122,6 +123,7 @@ export default function App() {
 
         <nav className="flex-1 space-y-2">
           <NavItem id="dashboard" icon={LayoutDashboard} label="Tổng quan" />
+          <NavItem id="tdv" icon={Compass} label="TDV Hub" />
           <NavItem id="yearly" icon={CalendarDays} label="Mục tiêu Năm" />
           <NavItem id="intel" icon={Book} label="Ghi chú" />
           <NavItem id="settings" icon={SettingsIcon} label="Hệ thống" />
@@ -147,7 +149,7 @@ export default function App() {
            <button onClick={() => setIsSidebarOpen(true)} className="p-2 -ml-2 text-slate-400 hover:text-white transition-transform active:scale-90 cursor-pointer">
              <LayoutDashboard className="w-6 h-6" />
            </button>
-           <h1 className="text-xs font-black text-white uppercase tracking-widest truncate max-w-[180px]">{settings.appTitle || 'NAMDUOC KPI'}</h1>
+           <h1 className="text-xs font-black text-white uppercase tracking-widest truncate max-w-[180px]">{settings.appTitle || 'NAMDUOC TDV'}</h1>
            <div className={cn("w-8 h-8 rounded-lg flex items-center justify-center border border-white/10", theme.bg)}>
              <AppIconNode className={cn("w-4.5 h-4.5", theme.text)} />
            </div>
@@ -172,6 +174,7 @@ export default function App() {
                 </div>
                 <nav className="space-y-3">
                   <NavItem id="dashboard" icon={LayoutDashboard} label="Tổng quan" />
+                  <NavItem id="tdv" icon={Compass} label="TDV Hub" />
                   <NavItem id="yearly" icon={CalendarDays} label="Mục tiêu Năm" />
                   <NavItem id="intel" icon={Book} label="Ghi chú" />
                   <NavItem id="settings" icon={SettingsIcon} label="Hệ thống" />
@@ -193,6 +196,7 @@ export default function App() {
               className="h-full"
             >
               {activeTab === 'dashboard' && <Dashboard key="dashboard" />}
+              {activeTab === 'tdv' && <TDVHub key="tdv" />}
               {activeTab === 'yearly' && <YearlyData key="yearly" />}
               {activeTab === 'intel' && <Notes key="intel" />}
               {activeTab === 'settings' && <Settings key="settings" />}
@@ -205,6 +209,7 @@ export default function App() {
       <nav className="lg:hidden fixed bottom-0 left-0 right-0 bg-slate-900/80 backdrop-blur-2xl border-t border-white/5 px-6 py-3 flex items-center justify-between z-[100] pb-safe">
         {[
           { id: 'dashboard', icon: LayoutDashboard, label: 'Tổng quan' },
+          { id: 'tdv', icon: Compass, label: 'TDV Hub' },
           { id: 'yearly', icon: CalendarDays, label: 'Mục tiêu Năm' },
           { id: 'intel', icon: Book, label: 'Ghi chú' },
           { id: 'settings', icon: SettingsIcon, label: 'Hệ thống' }

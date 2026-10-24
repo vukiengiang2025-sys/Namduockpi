@@ -1,20 +1,32 @@
-<div align="center">
-<img width="1200" height="475" alt="GHBanner" src="https://ai.google.dev/static/site-assets/images/share-ais-513315318.png" />
-</div>
+# Nam Dược Strategy AI
 
-# Run and deploy your AI Studio app
+Ứng dụng đồng hành cho trình dược viên: KPI, dự báo, tuyến bán hàng và kế hoạch hành động.
 
-This contains everything you need to run your app locally.
+## Chạy local
 
-View your app in AI Studio: https://ai.studio/apps/2a02d159-be57-48e2-8af2-79b2f2ecf50a
+```bash
+npm install
+npm run dev
+```
 
-## Run Locally
+Mở tab **TDV Hub** để nạp dữ liệu SalesUp hoặc dùng dữ liệu mẫu.
 
-**Prerequisites:**  Node.js
+## Kiểm tra
 
+```bash
+npm run lint
+npm run test:tdv
+npm run build
+```
 
-1. Install dependencies:
-   `npm install`
-2. Set the `GEMINI_API_KEY` in [.env.local](.env.local) to your Gemini API key
-3. Run the app:
-   `npm run dev`
+## Tích hợp dữ liệu SalesUp
+
+Xem [docs/TDV-SUPER-APP.md](docs/TDV-SUPER-APP.md).
+
+Công cụ xuất dữ liệu:
+
+```bash
+python3 scripts/export_salesup_tdv.py salesup.db \
+  --login <DANGNHAP> --month 10 --year 2026 \
+  --sales 120000000 --coverage 18 --output tdv-data.json
+```

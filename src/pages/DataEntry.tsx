@@ -120,7 +120,7 @@ export default function DataEntry({ hideHeader = false }: DataEntryProps) {
   const monthCoverageKPI = calcCoverageKPI(month.coverageActual, month.coverageTarget, settings.kpiWeights);
   const month15DaysKPI = calc15DaysKPI(month.sales15DaysActual, month.salesTarget);
   const month15DaysRatio = formatPercent(month.sales15DaysActual, month.salesTarget);
-  const monthSKUKPI = calcSKUKPI(month.skuActual);
+  const monthSKUKPI = calcSKUKPI(month.skuActual, settings.skuTiers);
   const monthTotalKPI = monthSalesKPI + monthCoverageKPI + month15DaysKPI + monthSKUKPI + (month.customPoints || 0);
 
   // Quarter Calcs

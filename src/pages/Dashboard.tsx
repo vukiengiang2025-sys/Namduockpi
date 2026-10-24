@@ -47,8 +47,8 @@ export default function Dashboard() {
   const monthSalesKPI = useMemo(() => calcSalesKPI(month.salesActual, month.salesTarget, settings.kpiWeights), [month, settings.kpiWeights]);
   const monthCoverageKPI = useMemo(() => calcCoverageKPI(month.coverageActual, month.coverageTarget, settings.kpiWeights), [month, settings.kpiWeights]);
   const month15DaysKPI = useMemo(() => calc15DaysKPI(month.sales15DaysActual, month.salesTarget), [month]);
-  const monthSKUKPI = useMemo(() => calcSKUKPI(month.skuActual), [month]);
-  const monthTotalKPI = useMemo(() => calcTotalKPI(month, settings.kpiWeights), [month, settings.kpiWeights]);
+  const monthSKUKPI = useMemo(() => calcSKUKPI(month.skuActual, settings.skuTiers), [month, settings.skuTiers]);
+  const monthTotalKPI = useMemo(() => calcTotalKPI(month, settings.kpiWeights, settings.skuTiers), [month, settings.kpiWeights, settings.skuTiers]);
 
   const salesRatio = useMemo(() => (month.salesTarget > 0 ? (month.salesActual / month.salesTarget) * 100 : 0), [month]);
   const coverageRatio = useMemo(() => (month.coverageTarget > 0 ? (month.coverageActual / month.coverageTarget) * 100 : 0), [month]);
@@ -102,8 +102,8 @@ export default function Dashboard() {
       const salesKPI = calcSalesKPI(m.salesActual, m.salesTarget, settings.kpiWeights);
       const coverageKPI = calcCoverageKPI(m.coverageActual, m.coverageTarget, settings.kpiWeights);
       const m15DaysKPI = calc15DaysKPI(m.sales15DaysActual, m.salesTarget);
-      const skuKPI = calcSKUKPI(m.skuActual);
-      const totalKPI = calcTotalKPI(m, settings.kpiWeights);
+      const skuKPI = calcSKUKPI(m.skuActual, settings.skuTiers);
+      const totalKPI = calcTotalKPI(m, settings.kpiWeights, settings.skuTiers);
       
       return {
         'Tháng': `Tháng ${i + 1}`,

@@ -8,7 +8,8 @@
     "build": "vite build",
     "preview": "vite preview",
     "clean": "rm -rf dist",
-    "lint": "tsc --noEmit"
+    "lint": "tsc --noEmit",
+    "test:tdv": "tsx scripts/tdv-selftest.ts"
   },
   "dependencies": {
     "@capacitor/android": "^8.3.1",
